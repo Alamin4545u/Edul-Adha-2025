@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ঈদ মোবারক ২০২৫</title>
+    <style>
+        /* CSS স্টাইলিং */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #1a3c34, #4a7043);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            max-width: 600px;
+            width: 90%;
+            z-index: 1;
+            animation: flashGlow 2s ease infinite;
+        }
+        @keyframes flashGlow {
+            0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 1); }
+            100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        }
+        h1 {
+            color: #ffd700;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            animation: flashText 1.5s ease infinite;
+        }
+        @keyframes flashText {
+            0% { text-shadow: 0 0 10px #ffd700; }
+            50% { text-shadow: 0 0 20px #ffffff, 0 0 30px #ffd700; }
+            100% { text-shadow: 0 0 10px #ffd700; }
+        }
+        .eid-image {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+            margin: 20px 0;
+            animation: fadeInImage 2s ease-in;
+        }
+        @keyframes fadeInImage {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .message {
+            font-size: 1.2em;
+            margin: 20px 0;
+        }
+        .countdown {
+            font-size: 1.5em;
+            margin: 20px 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            animation: flashGlow 2s ease infinite;
+        }
+        .countdown span {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .custom-form {
+            margin: 20px 0;
+        }
+        .custom-form input {
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            margin-right: 10px;
+            width: 200px;
+        }
+        .custom-form button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #ffd700;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #1a3c34;
+            animation: flashButton 1.5s ease infinite;
+        }
+        @keyframes flashButton {
+            0% { box-shadow: 0 0 10px #ffd700; }
+            50% { box-shadow: 0 0 20px #ffffff, 0 0 30px #ffd700; }
+            100% { box-shadow: 0 0 10px #ffd700; }
+        }
+        .custom-form button:hover {
+            background-color: #e6c200;
+        }
+        .custom-message {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-top: 20px;
+        }
+        .share-link {
+            margin-top: 10px;
+            font-size: 1em;
+            color: #ffd700;
+            word-break: break-all;
+        }
+        .share-buttons {
+            margin-top: 20px;
+        }
+        .share-buttons a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background-color: #fff;
+            color: #1a3c34;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            animation: flashButton 1.5s ease infinite;
+        }
+        .share-buttons a:hover {
+            background-color: #e6e6e6;
+        }
+        /* পার্টিকল ইফেক্ট (আতশবাজি) */
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffd700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: firework 1.5s ease-out forwards;
+        }
+        @keyframes firework {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        /* মোবাইল ফ্রেন্ডলি করার জন্য */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            .countdown {
+                font-size: 1.2em;
+            }
+            .custom-form input {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+            .custom-form button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ঈদ মোবারক ২০২৫!</h1>
+        <img src="https://via.placeholder.com/300x200?text=Eid+ul+Fitr" alt="Eid ul Fitr" class="eid-image">
+        <p class="message">ঈদুল ফিতরের শুভেচ্ছা! আল্লাহ আপনার জীবনকে আনন্দ ও শান্তিতে ভরিয়ে দিন।</p>
+        
+        <!-- কাউন্টডাউন টাইমার -->
+        <div class="countdown">
+            ঈদুল ফিতর শুরু হতে বাকি: 
+            <div id="countdown-timer">
+                <span id="days">00</span> দিন 
+                <span id="hours">00</span> ঘণ্টা 
+                <span id="minutes">00</span> মিনিট 
+                <span id="seconds">00</span> সেকেন্ড
+            </div>
+        </div>
+        
+        <!-- কাস্টম শুভেচ্ছা ফর্ম -->
+        <div class="custom-form">
+            <input type="text" id="nameInput" placeholder="বন্ধুর নাম লিখুন">
+            <button onclick="generateMessage()">বন্ধুকে শুভেচ্ছা পাঠান</button>
+        </div>
+        <p id="customMessage" class="custom-message"></p>
+        <p id="shareLink" class="share-link"></p>
+        
+        <!-- শেয়ার বাটন -->
+        <div class="share-buttons" id="shareButtons">
+            <a id="whatsappShare" href="#" target="_blank">WhatsApp</a>
+            <a id="facebookShare" href="#" target="_blank">Facebook</a>
+            <a id="emailShare" href="#" target="_blank">Email</a>
+        </div>
+    </div>
+
+    <script>
+        // কাউন্টডাউন টাইমার
+        const eidDate = new Date("March 30, 2025 08:00:00").getTime();
+
+        const countdownFunction = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = eidDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerText = days.toString().padStart(2, "0");
+            document.getElementById("hours").innerText = hours.toString().padStart(2, "0");
+            document.getElementById("minutes").innerText = minutes.toString().padStart(2, "0");
+            document.getElementById("seconds").innerText = seconds.toString().padStart(2, "0");
+
+            if (distance < 0) {
+                clearInterval(countdownFunction);
+                document.getElementById("countdown-timer").innerHTML = "ঈদ মোবারক! ঈদুল ফিতর শুরু হয়েছে!";
+            }
+        }, 1000);
+
+        // URL থেকে নাম পড়া এবং শুভেচ্ছা প্রদর্শন
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name');
+            if (name) {
+                document.getElementById('customMessage').innerText = `ঈদ মোবারক, ${decodeURIComponent(name)}! এই পবিত্র ঈদুল ফিতরে আপনার জীবন আনন্দ ও শান্তিতে ভরে উঠুক।`;
+            }
+        };
+
+        // কাস্টম শুভেচ্ছা এবং লিংক তৈরি
+        function generateMessage() {
+            const name = document.getElementById('nameInput').value;
+            const customMessage = document.getElementById('customMessage');
+            const shareLink = document.getElementById('shareLink');
+            const whatsappShare = document.getElementById('whatsappShare');
+            const facebookShare = document.getElementById('facebookShare');
+            const emailShare = document.getElementById('emailShare');
+
+            if (name) {
+                const encodedName = encodeURIComponent(name);
+                // ফলব্যাক URL (টেস্টিংয়ের জন্য, হোস্ট করার পর এটি পরিবর্তন করো)
+                const baseUrl = window.location.href.includes('file://') 
+                    ? 'https://your-eid-site.netlify.app' // এটি তোমার হোস্ট করা URL দিয়ে রিপ্লেস করো
+                    : window.location.href.split('?')[0];
+                const customUrl = `${baseUrl}?name=${encodedName}`;
+                
+                customMessage.innerText = `ঈদ মোবারক, ${name}! এই পবিত্র ঈদুল ফিতরে আপনার জীবন আনন্দ ও শান্তিতে ভরে উঠুক।`;
+                shareLink.innerText = `শেয়ার করুন: ${customUrl}`;
+                
+                // শেয়ার লিংক আপডেট
+                whatsappShare.href = `https://api.whatsapp.com/send?text=ঈদ%20মোবারক!%20আমার%20শুভেচ্ছা%20দেখুন:%20${customUrl}`;
+                facebookShare.href = `https://www.facebook.com/sharer/sharer.php?u=${customUrl}`;
+                emailShare.href = `mailto:?subject=ঈদ মোবারক&body=ঈদের শুভেচ্ছা! এই লিঙ্কে দেখুন: ${customUrl}`;
+            } else {
+                customMessage.innerText = 'দয়া করে বন্ধুর নাম লিখুন!';
+                shareLink.innerText = '';
+                whatsappShare.href = '#';
+                facebookShare.href = '#';
+                emailShare.href = '#';
+            }
+        }
+
+        // আতশবাজি পার্টিকল ইফেক্ট
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            document.body.appendChild(particle);
+
+            const x = Math.random() * window.innerWidth;
+            const y = Math.random() * window.innerHeight;
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+
+            const size = Math.random() * 8 + 4;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.animationDuration = `${Math.random() * 0.5 + 1}s`;
+
+            particle.addEventListener('animationend', () => {
+                particle.remove();
+            });
+        }
+
+        setInterval(createParticle, 200);
+    </script>
+</body>
+</ল>
