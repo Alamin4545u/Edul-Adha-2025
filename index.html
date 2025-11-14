@@ -2,161 +2,198 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Bkash Earn Free Tk</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Added favicon for premium look -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
-    <!-- Preload scripts for faster loading -->
-    <link rel="preload" href="https://telegram.org/js/telegram-web-app.js" as="script">
-    <link rel="preload" href="https://ad.gigapub.tech/script?id=4203" as="script">
-    <link rel="preload" href="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js" as="script">
-    <link rel="preload" href="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js" as="script">
-    <link rel="preload" href="script.js" as="script">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Connection Test</title>
+
+    <!-- সিএসএস (CSS) কোড -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        #container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #2c2c2c;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        h1 {
+            color: #ffffff;
+            margin-top: 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 15px;
+        }
+        #status-message {
+            font-size: 1.1em;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+        .status-running {
+            background-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+        .status-success {
+            background-color: #1c4b30;
+            color: #a3ffc3;
+        }
+        .status-error {
+            background-color: #5c2121;
+            color: #ffc2c2;
+        }
+        #user-info {
+            text-align: left;
+            margin-top: 20px;
+            background-color: #333;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        #user-info p {
+            margin: 8px 0;
+        }
+        #user-info strong {
+            color: #a9dcff;
+        }
+        #error-log {
+            text-align: left;
+            margin-top: 20px;
+            background-color: #7c2e2e;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap; /* To wrap long error messages */
+            word-wrap: break-word;
+            font-family: monospace;
+        }
+    </style>
+
+    <!-- জাভাস্ক্রিপ্ট লাইব্রেরি -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- Top Header -->
-    <header class="app-header">
-        <div class="profile-section">
-            <div class="profile-pic" id="profilePic">..</div>
-            <div class="user-details">
-                <p id="headerFullName">লোড হচ্ছে...</p>
-                <small id="headerUsername">@username</small>
-            </div>
-        </div>
-        <div class="header-wallet">
-            <p>আপনার ব্যালেন্স</p>
-            <span class="balance-amount" id="headerBalance">৳ 0.00</span>
-        </div>
-    </header>
 
-    <!-- Main Content Area -->
-    <main class="content-container">
-        <!-- Home Screen -->
-        <div id="home-screen" class="screen active">
-            <div class="home-actions">
-                <button id="dailyCheckinBtn" class="icon-btn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3s-3 1.34-3 3c0 .35.07.69.18 1H6c-1.1 0-2 .9-2 2v2h16V8c0-1.1-.9-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM4 12v8c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8H4z"/></svg>
-                    <span>Daily Check</span>
-                </button>
-                <button id="spinWheelBtn" class="icon-btn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M512 256c0 141.4-114.6 256-256 256S0 397.4 0 256 114.6 0 256 0s256 114.6 256 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z"/></svg>
-                    <span>Spin Wheel</span>
-                </button>
-                <button id="quizBtn" class="icon-btn">
-                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.89 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-                    <span>কুইজ</span>
-                </button>
-            </div>
-        </div>
+    <div id="container">
+        <h1>Supabase টেস্ট অ্যাপ</h1>
+        <div id="status-message" class="status-running">অ্যাপ চালু হচ্ছে...</div>
+        <div id="user-info" style="display: none;"></div>
+        <pre id="error-log" style="display: none;"></pre>
+    </div>
 
-        <!-- Spin Screen -->
-        <div id="spin-screen" class="screen">
-            <button id="spinBackBtn" class="back-btn"><span>←</span> হোম</button>
-            <h2>Spin & Win</h2>
-            <div class="spin-wrapper">
-                <div class="spin-pointer"></div>
-                <div class="spin-wheel-container">
-                    <svg id="svgWheel" viewBox="0 0 500 500">
-                        <defs>
-                            <radialGradient id="wheelGlow" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="white" stop-opacity="0.8"/>
-                                <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
-                            </radialGradient>
-                            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                                <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
-                                <feMerge>
-                                    <feMergeNode in="coloredBlur"/>
-                                    <feMergeNode in="SourceGraphic"/>
-                                </feMerge>
-                            </filter>
-                        </defs>
-                        <circle cx="250" cy="250" r="250" fill="#f06292"/>
-                        <circle cx="250" cy="250" r="240" fill="url(#wheelGlow)"/>
-                        <g id="wheelGroup"></g>
-                    </svg>
-                    <button id="spinTriggerBtn"><span>SPIN</span><div class="btn-glow"></div></button>
-                </div>
-            </div>
-            <p id="spin-info">আপনার আজকের স্পিন বাকি আছে: <span id="spinsLeft">...</span></p>
-        </div>
+    <!-- মূল জাভাস্ক্রিপ্ট (JS) কোড -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // UI elements
+            const statusMessage = document.getElementById('status-message');
+            const userInfoDiv = document.getElementById('user-info');
+            const errorLogPre = document.getElementById('error-log');
 
-        <!-- Task Screen -->
-        <div id="task-screen" class="screen">
-            <h2>টাস্ক সেন্টার</h2>
-            <div class="scrollable-content">
-                <div id="task-list"><p>নতুন টাস্ক শীঘ্রই আসছে...</p></div>
-            </div>
-        </div>
+            // Supabase ক্লায়েন্ট তৈরি করা
+            const supabaseUrl = "https://fwikhcittcaadwziitdv.supabase.co";
+            const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ3aWtoY2l0dGNhYWR3emlpdGR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMxMzY0MjIsImV4cCI6MjA3ODcxMjQyMn0.wLBcy29HNFPZ5dRzJ11CaIjD_zQvBi3vNLE66HlI2es";
+            const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+            
+            const tg = window.Telegram.WebApp;
+            tg.ready();
 
-        <!-- Quiz Screen -->
-        <div id="quiz-screen" class="screen">
-            <button id="quizBackBtn" class="back-btn"><span>←</span> হোম</button>
-            <h2>বাংলাদেশ কুইজ</h2>
-            <div class="quiz-info">
-                <p id="quiz-progress-text">দৈনিক কুইজ সেশন বাকি আছে: ...</p>
-                <p id="quiz-step-text">ধাপ: ০/৫</p>
-                <div class="quiz-progress-bar">
-                    <div id="quiz-progress-inner" class="quiz-progress-inner"></div>
-                </div>
-                <p id="quiz-instruction">সঠিক উত্তর দিয়ে পরবর্তী ধাপে যান।</p>
-            </div>
-            <div class="quiz-card">
-                <p id="quiz-question-text">প্রশ্ন লোড হচ্ছে...</p>
-                <div id="quiz-options-container"></div>
-                <button id="next-quiz-btn" class="action-btn">পরবর্তী কুইজ</button>
-            </div>
-        </div>
+            // ফাংশন: স্ক্রিনে মেসেজ দেখানোর জন্য
+            function showStatus(message, type = 'running') {
+                statusMessage.textContent = message;
+                statusMessage.className = `status-${type}`;
+            }
 
-        <!-- Wallet Screen -->
-        <div id="wallet-screen" class="screen">
-            <h2>ওয়ালেট</h2>
-            <div class="wallet-box">
-                <p>বর্তমান ব্যালেন্স: <strong id="withdrawBalance">৳ 0.00</strong></p>
-                <p>সর্বনিম্ন উইথড্র: <strong>৳ 10.00</strong></p>
-            </div>
-            <div class="form-group">
-                <label for="bkashNumber">আপনার বিকাশ নম্বর দিন:</label>
-                <input type="tel" id="bkashNumber" placeholder="e.g., 01700000000" inputmode="numeric">
-            </div>
-            <button id="submitWithdrawBtn" class="action-btn">উইথড্র সাবমিট করুন</button>
-        </div>
-        
-        <!-- Refer Screen -->
-        <div id="refer-screen" class="screen">
-            <h2>বন্ধুদের রেফার করুন</h2>
-            <p>আপনার বন্ধুদের রেফার করে আয় করুন। নিচের লিংকটি তাদের সাথে শেয়ার করুন।</p>
-            <div class="refer-box">
-                <input type="text" id="referralLink" readonly>
-                <button id="shareReferralBtn">শেয়ার করুন</button>
-            </div>
-        </div>
-    </main>
+            // ফাংশন: एरর দেখানোর জন্য
+            function showError(error) {
+                errorLogPre.textContent = `ত্রুটি:\n${error.message}\n\nটেকনিক্যাল বিবরণ:\n${JSON.stringify(error, null, 2)}`;
+                errorLogPre.style.display = 'block';
+            }
+            
+            // মূল ফাংশন
+            async function main() {
+                try {
+                    showStatus('টেলিগ্রাম ব্যবহারকারীর তথ্য খোঁজা হচ্ছে...');
+                    if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+                        showStatus('টেলিগ্রাম ব্যবহারকারীর তথ্য পাওয়া যায়নি!', 'error');
+                        return;
+                    }
+                    
+                    const telegramUser = tg.initDataUnsafe.user;
+                    showStatus(`ব্যবহারকারী "${telegramUser.first_name}" পাওয়া গেছে। ডেটাবেস থেকে তথ্য আনা হচ্ছে...`);
 
-    <!-- Bottom Navigation Bar -->
-    <nav id="bottom-nav">
-        <button class="nav-btn active" data-screen="home-screen">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-            <span>হোম</span>
-        </button>
-        <button class="nav-btn" data-screen="task-screen">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M22 7h-6V5h6v2zm-8-2h-2v2h2V5zm-4 0H8v2h2V5zM22 11h-6V9h6v2zm-8 0h-2v2h2v-2zm-4 0H8v2h2v-2zM22 15h-6v-2h6v2zm-8 0h-2v2h2v-2zm-4 0H8v2h2v-2zM22 19h-6v-2h6v2zm-8 0h-2v2h2v-2zm-4 0H8v2h2v-2zM6 7H4v14h14v-2H6V7z"/></svg>
-            <span>টাস্ক</span>
-        </button>
-        <button class="nav-btn" data-screen="wallet-screen">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-            <span>ওয়ালেট</span>
-        </button>
-        <button class="nav-btn" data-screen="refer-screen">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/></svg>
-            <span>রেফার</span>
-        </button>
-    </nav>
-    
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://ad.gigapub.tech/script?id=4203"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="script.js"></script>
+                    // ডেটাবেস থেকে ব্যবহারকারী খোঁজা
+                    const { data, error } = await supabaseClient
+                        .from('users') // টেবিলের নাম: users
+                        .select('*')
+                        .eq('telegram_id', telegramUser.id.toString()) // কলামের নাম: telegram_id
+                        .single();
+
+                    if (data) {
+                        // যদি ব্যবহারকারীকে পাওয়া যায়
+                        showStatus('সফলভাবে ব্যবহারকারীকে ডেটাবেসে পাওয়া গেছে!', 'success');
+                        userInfoDiv.innerHTML = `
+                            <p><strong>নাম:</strong> ${data.full_name}</p>
+                            <p><strong>ব্যালেন্স:</strong> ৳ ${data.balance}</p>
+                            <p><strong>টেলিগ্রাম আইডি:</strong> ${data.telegram_id}</p>
+                        `;
+                        userInfoDiv.style.display = 'block';
+
+                    } else if (error && error.code === 'PGRST116') {
+                        // যদি ব্যবহারকারীকে পাওয়া না যায়
+                        showStatus('ব্যবহারকারীকে ডেটাবেসে পাওয়া যায়নি। নতুন প্রোফাইল তৈরি করা হচ্ছে...', 'running');
+                        
+                        // নতুন ব্যবহারকারী তৈরি করার চেষ্টা
+                        const newUser = {
+                            telegram_id: telegramUser.id.toString(),
+                            username: telegramUser.username || '',
+                            full_name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim()
+                        };
+                        
+                        const { data: createdUser, error: insertError } = await supabaseClient
+                            .from('users')
+                            .insert(newUser)
+                            .select()
+                            .single();
+                            
+                        if (insertError) {
+                            showStatus('নতুন ব্যবহারকারী তৈরি করতে গিয়ে সমস্যা হয়েছে!', 'error');
+                            showError(insertError);
+                        } else {
+                            showStatus('নতুন ব্যবহারকারী সফলভাবে তৈরি হয়েছে!', 'success');
+                            userInfoDiv.innerHTML = `
+                                <p><strong>নাম:</strong> ${createdUser.full_name}</p>
+                                <p><strong>ব্যালেন্স:</strong> ৳ ${createdUser.balance}</p>
+                                <p><strong>টেলিগ্রাম আইডি:</strong> ${createdUser.telegram_id}</p>
+                            `;
+                            userInfoDiv.style.display = 'block';
+                        }
+                        
+                    } else {
+                        // অন্য কোনো एरর হলে
+                        showStatus('ডেটাবেস থেকে তথ্য আনতে গিয়ে সমস্যা হয়েছে!', 'error');
+                        showError(error);
+                    }
+
+                } catch (e) {
+                    showStatus('একটি মারাত্মক ত্রুটি ঘটেছে!', 'error');
+                    showError(e);
+                }
+            }
+
+            // অ্যাপ চালু করা
+            main();
+        });
+    </script>
 </body>
 </html>
