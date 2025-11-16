@@ -30,9 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let settings = {};
     let gigaLoaded = false;
 
-    // Realtime Update
-    let realtimeInterval;
-
     // Theme
     function initTheme() {
         const theme = tg.colorScheme || 'light';
@@ -62,14 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const tgUser = tg.initDataUnsafe?.user;
         if (!tgUser) return showError('User not found');
 
-        // Profile Pic
-        if (tgUser.photo_url) profilePic.src = tgUser.photo_url;
-        else profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tgUser.first_name)}&background=3b82f6&color=fff&size=128`;
+        // Profile
+        profilePic.src = tgUser.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(tgUser.first_name)}&background=3b82f6&color=fff&size=128`;
         usernameElem.textContent = `${tgUser.first_name} ${tgUser.last_name || ''}`.trim();
         userIdElem.textContent = `@${tgUser.username || tgUser.id}`;
 
         try {
-            let { data: user } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
+            let { data: user } = await supabase.fromfrom('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
             if (!user) {
                 const { data: newUser } = await supabase.from('users').insert({
                     telegram_id: tgUser.id,
@@ -83,14 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = user;
             updateUI();
 
-            await Promise.all([loadSettings(), loadWithdrawMethods(), loadTasks(), loadAdService(), loadDailyCheckin()]);
+            await Promise.all([loadSettings(), loadWithdrawMethods(), loadAdService(), loadDailyCheckin()]);
             startRealtimeUpdates();
         } catch (err) { showError(err.message); }
     }
 
-    // Realtime Updates (Every 3s)
+    // Realtime
     function startRealtimeUpdates() {
-        realtimeInterval = setInterval(async () => {
+        setInterval(async () => {
             if (!currentUser) return;
             const { data } = await supabase.from('users').select('balance, ad_views').eq('telegram_id', currentUser.telegram_id).single();
             if (data) {
@@ -107,16 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
         adViewsElem.textContent = currentUser.ad_views || 0;
     }
 
-    // Load Settings (Admin Control)
+    // Settings
     async function loadSettings() {
         const { data } = await supabase.from('settings').select('*').single();
         settings = data || {};
-        if (settings.main_button_reward > 0) {
+        if (settings.main_button_reward) {
             tg.MainButton.setText(`Earn ৳${settings.main_button_reward}`).onClick(() => watchAdBtn.click());
         }
     }
 
-    // Load Ad Service
+    // Ad Service
     async function loadAdService() {
         if (!settings.giga_app_id) return;
         const script = document.createElement('script');
@@ -152,40 +148,39 @@ document.addEventListener('DOMContentLoaded', () => {
             showSuccess(`+৳${settings.daily_checkin_reward} added!`);
             showConfetti();
             loadDailyCheckin();
-        } catch (err) {
-            showError('Failed');
-            checkinBtn.textContent = 'Check-in Now';
+        } catch { checkinBtn.textContent = 'Check-in Now'; }
+    }
+
+    // Load Tasks (Only in Tasks Tab)
+    window.loadTasks = async function() {
+        if (document.querySelector('[data-tab="tasks"]').classList.contains('active')) {
+            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
+            const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
+            taskList.innerHTML = tasks?.length ? '' : '<p style="text-align:center;color:var(--text-light);">No tasks</p>';
+
+            tasks?.forEach(task => {
+                const prog = progress?.find(p => p.task_id === task.id) || { ads_watched: 0, completed: false };
+                const percent = Math.min((prog.ads_watched / task.required_ads) * 100, 100);
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <div class="task-title"><span class="task-emoji">${task.emoji || 'Target'}</span> ${task.title}</div>
+                    <div class="task-desc">${task.description}</div>
+                    <div class="task-reward">Reward: ৳${task.reward}</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
+                    <div class="task-progress">Progress: ${prog.ads_watched}/${task.required_ads}</div>
+                    <button class="btn ${prog.completed ? 'btn-green' : 'btn-blue'} task-btn" data-id="${task.id}" ${prog.completed ? 'disabled' : ''}>
+                        ${prog.completed ? 'Completed' : 'Watch Ad'}
+                    </button>
+                `;
+                taskList.appendChild(card);
+            });
+
+            document.querySelectorAll('.task-btn').forEach(btn => {
+                btn.onclick = () => handleTask(btn);
+            });
         }
-    }
-
-    // Load Tasks
-    async function loadTasks() {
-        const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
-        const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
-        taskList.innerHTML = tasks?.length ? '' : '<p style="text-align:center;color:var(--text-light);">No tasks</p>';
-
-        tasks?.forEach(task => {
-            const prog = progress?.find(p => p.task_id === task.id) || { ads_watched: 0, completed: false };
-            const percent = Math.min((prog.ads_watched / task.required_ads) * 100, 100);
-            const card = document.createElement('div');
-            card.className = 'task-card';
-            card.innerHTML = `
-                <div class="task-title"><span class="task-emoji">${task.emoji || 'Target'}</span> ${task.title}</div>
-                <div class="task-desc">${task.description}</div>
-                <div class="task-reward">Reward: ৳${task.reward}</div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
-                <div class="task-progress">Progress: ${prog.ads_watched}/${task.required_ads}</div>
-                <button class="btn ${prog.completed ? 'btn-green' : 'btn-blue'} task-btn" data-id="${task.id}" ${prog.completed ? 'disabled' : ''}>
-                    ${prog.completed ? 'Completed' : 'Watch Ad'}
-                </button>
-            `;
-            taskList.appendChild(card);
-        });
-
-        document.querySelectorAll('.task-btn').forEach(btn => {
-            btn.onclick = () => handleTask(btn);
-        });
-    }
+    };
 
     async function handleTask(btn) {
         const taskId = btn.dataset.id;
@@ -202,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch { btn.disabled = false; btn.textContent = 'Watch Ad'; }
     }
 
-    // Direct Ad
+    // Watch Ad
     watchAdBtn.onclick = async () => {
         if (!gigaLoaded) return;
         watchAdBtn.disabled = true;
@@ -228,8 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
     withdrawBtn.onclick = () => {
         if (!withdrawMethods.length) return showError('No methods');
         methodSelect.innerHTML = withdrawMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
-        const method = withdrawMethods[0];
-        amountSelect.innerHTML = method.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
+        const m = withdrawMethods[0];
+        amountSelect.innerHTML = m.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
         modal.style.display = 'flex';
     };
 
@@ -240,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     withdrawForm.onsubmit = async e => {
         e.preventDefault();
-        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits required');
+        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits');
         const amount = +amountSelect.value;
         if (currentUser.balance < amount) return showWithdrawError('Low balance');
 
@@ -270,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
             t.classList.add('active');
             document.getElementById(t.dataset.tab).classList.add('active');
+            if (t.dataset.tab === 'tasks') loadTasks();
         };
     });
 
