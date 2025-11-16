@@ -4,13 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const tg = window.Telegram.WebApp;
 
-    // DOM Elements
-    const nameElem = document.getElementById('name');
+    // DOM
+    const profilePic = document.getElementById('profile-pic');
+    const usernameElem = document.getElementById('username');
+    const userIdElem = document.getElementById('user-id');
     const balanceElem = document.getElementById('balance');
     const adViewsElem = document.getElementById('ad-views');
     const watchAdBtn = document.getElementById('watch-ad-btn');
     const statusElem = document.getElementById('status');
-    const taskListElem = document.getElementById('task-list');
+    const taskList = document.getElementById('task-list');
     const withdrawBtn = document.getElementById('withdraw-btn');
     const modal = document.getElementById('withdraw-modal');
     const closeBtn = document.querySelector('.close');
@@ -19,268 +21,263 @@ document.addEventListener('DOMContentLoaded', () => {
     const amountSelect = document.getElementById('amount');
     const numberInput = document.getElementById('number');
     const withdrawStatus = document.getElementById('withdraw-status');
-    const body = document.body;
+    const checkinCard = document.getElementById('daily-checkin');
+    const checkinBtn = document.getElementById('checkin-btn');
+    const checkinReward = document.getElementById('checkin-reward');
     const confetti = document.getElementById('confetti');
 
     let currentUser = null;
-    let withdrawMethods = [];
+    let settings = {};
     let gigaLoaded = false;
-    let startX = 0;
 
-    // Premium: Theme & Confetti
+    // Realtime Update
+    let realtimeInterval;
+
+    // Theme
     function initTheme() {
         const theme = tg.colorScheme || 'light';
-        body.setAttribute('data-theme', theme);
+        document.body.setAttribute('data-theme', theme);
         tg.setHeaderColor(theme === 'dark' ? '#0f172a' : '#f8fafc');
     }
 
+    // Confetti
     function showConfetti() {
         confetti.innerHTML = '';
-        for (let i = 0; i < 50; i++) {
-            const piece = document.createElement('div');
-            piece.className = 'confetti-piece';
-            piece.style.left = Math.random() * 100 + 'vw';
-            piece.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
-            piece.style.animationDelay = Math.random() * 3 + 's';
-            confetti.appendChild(piece);
+        for (let i = 0; i < 40; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.background = `hsl(${Math.random()*360}, 70%, 60%)`;
+            p.style.animationDelay = Math.random() * 3 + 's';
+            confetti.appendChild(p);
         }
         setTimeout(() => confetti.innerHTML = '', 3000);
     }
 
-    // Initialize App
-    async function initializeApp() {
-        tg.ready();
-        tg.expand();
-        initTheme();
+    // Initialize
+    async function init() {
+        tg.ready(); tg.expand(); initTheme();
         tg.MainButton.setText('Earn More').show().onClick(() => watchAdBtn.click());
 
-        // Swipe for Tabs
-        document.addEventListener('touchstart', e => startX = e.touches[0].clientX);
-        document.addEventListener('touchend', e => {
-            const endX = e.changedTouches[0].clientX;
-            if (startX - endX > 50) document.querySelector('[data-tab="tasks"]').click();
-            if (endX - startX > 50) document.querySelector('[data-tab="home"]').click();
-        });
-
-        statusElem.textContent = 'Loading...';
         const tgUser = tg.initDataUnsafe?.user;
-        if (!tgUser) { showError('User not found.'); return; }
+        if (!tgUser) return showError('User not found');
+
+        // Profile Pic
+        if (tgUser.photo_url) profilePic.src = tgUser.photo_url;
+        else profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tgUser.first_name)}&background=3b82f6&color=fff&size=128`;
+        usernameElem.textContent = `${tgUser.first_name} ${tgUser.last_name || ''}`.trim();
+        userIdElem.textContent = `@${tgUser.username || tgUser.id}`;
 
         try {
             let { data: user } = await supabase.from('users').select('*').eq('telegram_id', tgUser.id).maybeSingle();
             if (!user) {
                 const { data: newUser } = await supabase.from('users').insert({
                     telegram_id: tgUser.id,
-                    first_name: tgUser.first_name || 'User',
+                    first_name: tgUser.first_name,
                     last_name: tgUser.last_name || '',
                     username: tgUser.username || ''
                 }).select().single();
                 user = newUser;
             }
-            if (user.is_banned) {
-                document.body.innerHTML = '<h1 style="text-align:center;color:red;">Banned</h1>';
-                return;
-            }
+            if (user.is_banned) return document.body.innerHTML = '<h1 style="text-align:center;color:red;">Banned</h1>';
             currentUser = user;
-            updateUserUI();
-            await loadWithdrawMethods();
-            await loadTasks();
-            await loadAdService();
-            statusElem.textContent = 'Ready!';
-        } catch (err) {
-            showError(`Error: ${err.message}`);
-        }
+            updateUI();
+
+            await Promise.all([loadSettings(), loadWithdrawMethods(), loadTasks(), loadAdService(), loadDailyCheckin()]);
+            startRealtimeUpdates();
+        } catch (err) { showError(err.message); }
     }
 
-    function updateUserUI() {
-        if (!currentUser) return;
-        nameElem.textContent = currentUser.first_name || 'User';
-        const balance = parseFloat(currentUser.balance || 0).toFixed(2);
-        balanceElem.textContent = `৳${balance}`;
-        balanceElem.style.background = `linear-gradient(135deg, ${balance > 50 ? '#10b981' : '#3b82f6'}, #f59e0b)`;
+    // Realtime Updates (Every 3s)
+    function startRealtimeUpdates() {
+        realtimeInterval = setInterval(async () => {
+            if (!currentUser) return;
+            const { data } = await supabase.from('users').select('balance, ad_views').eq('telegram_id', currentUser.telegram_id).single();
+            if (data) {
+                currentUser.balance = data.balance;
+                currentUser.ad_views = data.ad_views;
+                updateUI();
+            }
+            await loadDailyCheckin();
+        }, 3000);
+    }
+
+    function updateUI() {
+        balanceElem.textContent = `৳${parseFloat(currentUser.balance || 0).toFixed(2)}`;
         adViewsElem.textContent = currentUser.ad_views || 0;
-        statusElem.textContent = '';
+    }
+
+    // Load Settings (Admin Control)
+    async function loadSettings() {
+        const { data } = await supabase.from('settings').select('*').single();
+        settings = data || {};
+        if (settings.main_button_reward > 0) {
+            tg.MainButton.setText(`Earn ৳${settings.main_button_reward}`).onClick(() => watchAdBtn.click());
+        }
     }
 
     // Load Ad Service
     async function loadAdService() {
-        const { data: settings } = await supabase.from('settings').select('giga_app_id').single();
-        if (!settings?.giga_app_id) { showError('Ad not configured.'); return; }
-
-        if (document.querySelector(`script[src*="gigapub.tech"]`)) {
-            gigaLoaded = true;
-            watchAdBtn.disabled = false;
-            return;
-        }
-
+        if (!settings.giga_app_id) return;
         const script = document.createElement('script');
         script.src = `https://ad.gigapub.tech/script?id=${settings.giga_app_id}`;
-        script.onload = () => {
-            gigaLoaded = typeof window.showGiga === 'function';
-            if (gigaLoaded) watchAdBtn.disabled = false;
-            else showError('Ad failed to load.');
-        };
-        script.onerror = () => showError('Ad script error.');
+        script.onload = () => { gigaLoaded = true; watchAdBtn.disabled = false; };
         document.head.appendChild(script);
     }
 
-    // Tab Switching
-    document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(btn.dataset.tab).classList.add('active');
-        });
-    });
+    // Daily Check-in
+    async function loadDailyCheckin() {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: record } = await supabase.from('daily_checkins').select('*').eq('user_id', currentUser.telegram_id).eq('date', today).maybeSingle();
+        const hasChecked = !!record;
+
+        if (settings.daily_checkin_enabled && !hasChecked) {
+            checkinCard.style.display = 'block';
+            checkinReward.textContent = `৳${settings.daily_checkin_reward || 0.10}`;
+            checkinBtn.onclick = () => handleDailyCheckin();
+        } else {
+            checkinCard.style.display = 'none';
+        }
+    }
+
+    async function handleDailyCheckin() {
+        if (!gigaLoaded) return showError('Ad not ready');
+        checkinBtn.textContent = 'Loading...';
+        try {
+            await window.showGiga();
+            const { data, error } = await supabase.rpc('claim_daily_checkin', { user_telegram_id: currentUser.telegram_id });
+            if (error) throw error;
+            currentUser.balance = data.new_balance;
+            updateUI();
+            showSuccess(`+৳${settings.daily_checkin_reward} added!`);
+            showConfetti();
+            loadDailyCheckin();
+        } catch (err) {
+            showError('Failed');
+            checkinBtn.textContent = 'Check-in Now';
+        }
+    }
 
     // Load Tasks
     async function loadTasks() {
-        taskListElem.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">Loading...</p>';
-        const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
+        const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
         const { data: progress } = await supabase.from('user_task_progress').select('*').eq('user_telegram_id', currentUser.telegram_id);
+        taskList.innerHTML = tasks?.length ? '' : '<p style="text-align:center;color:var(--text-light);">No tasks</p>';
 
-        if (!tasks?.length) {
-            taskListElem.innerHTML = '<p class="error">No tasks.</p>';
-            return;
-        }
-
-        taskListElem.innerHTML = '';
-        tasks.forEach(task => {
+        tasks?.forEach(task => {
             const prog = progress?.find(p => p.task_id === task.id) || { ads_watched: 0, completed: false };
             const percent = Math.min((prog.ads_watched / task.required_ads) * 100, 100);
-
             const card = document.createElement('div');
             card.className = 'task-card';
             card.innerHTML = `
-                <div style="font-size:2rem;margin-bottom:10px;">Target</div>
-                <h3>${task.title}</h3>
-                <p>${task.description || ''}</p>
-                <p>Reward: <b>৳${task.reward}</b></p>
-                <div class="progress-bar"><div style="width:${percent}%"></div></div>
-                <p>Progress: ${prog.ads_watched}/${task.required_ads}</p>
-                <button class="btn btn-green task-btn" data-task-id="${task.id}" ${prog.completed ? 'disabled' : ''}>
+                <div class="task-title"><span class="task-emoji">${task.emoji || 'Target'}</span> ${task.title}</div>
+                <div class="task-desc">${task.description}</div>
+                <div class="task-reward">Reward: ৳${task.reward}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${percent}%"></div></div>
+                <div class="task-progress">Progress: ${prog.ads_watched}/${task.required_ads}</div>
+                <button class="btn ${prog.completed ? 'btn-green' : 'btn-blue'} task-btn" data-id="${task.id}" ${prog.completed ? 'disabled' : ''}>
                     ${prog.completed ? 'Completed' : 'Watch Ad'}
                 </button>
             `;
-            taskListElem.appendChild(card);
+            taskList.appendChild(card);
         });
 
         document.querySelectorAll('.task-btn').forEach(btn => {
-            btn.onclick = () => handleTaskAd(btn);
+            btn.onclick = () => handleTask(btn);
         });
     }
 
-    // Handle Task Ad
-    async function handleTaskAd(btn) {
-        if (!gigaLoaded) return showError('Ad not ready.');
-        btn.disabled = true;
-        btn.textContent = 'Loading...';
-
+    async function handleTask(btn) {
+        const taskId = btn.dataset.id;
+        btn.disabled = true; btn.textContent = 'Loading...';
         try {
             await window.showGiga();
-            const { data, error } = await supabase.rpc('update_task_progress', {
-                task_id_param: parseInt(btn.dataset.taskId),
-                user_id_param: currentUser.telegram_id
-            });
+            const { data, error } = await supabase.rpc('update_task_progress', { task_id_param: +taskId, user_id_param: currentUser.telegram_id });
             if (error) throw error;
-            const result = data[0];
-            currentUser.balance = result.new_balance;
-            updateUserUI();
-            await loadTasks();
-            if (result.is_completed) {
-                showSuccess(`Task Done! +৳${result.reward_amount}`);
-                showConfetti();
-            } else {
-                showSuccess('Ad watched!');
-            }
-        } catch (err) {
-            showError('Ad failed.');
-            btn.disabled = false;
-            btn.textContent = 'Watch Ad';
-        }
+            currentUser.balance = data[0].new_balance;
+            updateUI();
+            loadTasks();
+            showSuccess(data[0].is_completed ? `+৳${data[0].reward_amount}` : 'Ad watched');
+            if (data[0].is_completed) showConfetti();
+        } catch { btn.disabled = false; btn.textContent = 'Watch Ad'; }
     }
 
     // Direct Ad
     watchAdBtn.onclick = async () => {
-        if (!gigaLoaded) return showError('Ad not ready.');
-        tg.HapticFeedback.impactOccurred('medium');
+        if (!gigaLoaded) return;
         watchAdBtn.disabled = true;
-        showStatus('Loading ad...');
-
         try {
             await window.showGiga();
             const { data, error } = await supabase.rpc('claim_reward', { user_telegram_id: currentUser.telegram_id });
             if (error) throw error;
-            const result = data[0];
-            currentUser.balance = result.new_balance;
-            currentUser.ad_views = result.new_ad_views;
-            updateUserUI();
-            showSuccess('Reward! Money');
+            currentUser.balance = data[0].new_balance;
+            currentUser.ad_views = data[0].new_ad_views;
+            updateUI();
+            showSuccess('Reward added!');
             showConfetti();
-        } catch (err) {
-            showError('Ad failed.');
-        } finally {
-            watchAdBtn.disabled = false;
-        }
+        } catch { } finally { watchAdBtn.disabled = false; }
     };
 
     // Withdraw
+    let withdrawMethods = [];
     async function loadWithdrawMethods() {
         const { data } = await supabase.from('withdraw_methods').select('*').eq('is_active', true);
         withdrawMethods = data || [];
     }
 
     withdrawBtn.onclick = () => {
-        if (!withdrawMethods.length) return showError('No methods.');
+        if (!withdrawMethods.length) return showError('No methods');
         methodSelect.innerHTML = withdrawMethods.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
-        updateAmountOptions();
+        const method = withdrawMethods[0];
+        amountSelect.innerHTML = method.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
         modal.style.display = 'flex';
     };
 
-    closeBtn.onclick = () => modal.style.display = 'none';
-    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
-
-    methodSelect.onchange = updateAmountOptions;
-    function updateAmountOptions() {
-        const method = withdrawMethods.find(m => m.name === methodSelect.value);
-        if (method) {
-            amountSelect.innerHTML = method.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
-        }
-    }
+    methodSelect.onchange = () => {
+        const m = withdrawMethods.find(x => x.name === methodSelect.value);
+        amountSelect.innerHTML = m.amounts.map(a => `<option value="${a}">৳${a}</option>`).join('');
+    };
 
     withdrawForm.onsubmit = async e => {
         e.preventDefault();
-        if (!numberInput.value.match(/^\d{11}$/)) return showWithdrawError('11-digit number required.');
-
-        const amount = parseFloat(amountSelect.value);
-        if (currentUser.balance < amount) return showWithdrawError('Low balance.');
+        if (!/^\d{11}$/.test(numberInput.value)) return showWithdrawError('11 digits required');
+        const amount = +amountSelect.value;
+        if (currentUser.balance < amount) return showWithdrawError('Low balance');
 
         const { error } = await supabase.from('withdraw_requests').insert({
             user_id: currentUser.telegram_id,
             method: methodSelect.value,
-            amount,
-            account_number: numberInput.value
+            amount, account_number: numberInput.value
         });
 
-        if (error) {
-            showWithdrawError(`Error: ${error.message}`);
-        } else {
+        if (error) showWithdrawError(error.message);
+        else {
             currentUser.balance -= amount;
-            await supabase.from('users').update({ balance: currentUser.balance }).eq('telegram_id', currentUser.telegram_id);
-            updateUserUI();
+            updateUI();
             showWithdrawSuccess('Sent!');
             showConfetti();
             setTimeout(() => modal.style.display = 'none', 2000);
         }
     };
 
+    closeBtn.onclick = () => modal.style.display = 'none';
+    window.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+
+    // Tab Switch
+    document.querySelectorAll('.tab').forEach(t => {
+        t.onclick = () => {
+            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            document.getElementById(t.dataset.tab).classList.add('active');
+        };
+    });
+
     // Helpers
     function showError(msg) { statusElem.textContent = `Error: ${msg}`; statusElem.className = 'error'; }
     function showSuccess(msg) { statusElem.textContent = `Success: ${msg}`; statusElem.className = 'success'; }
-    function showStatus(msg) { statusElem.textContent = msg; statusElem.className = ''; }
     function showWithdrawError(msg) { withdrawStatus.textContent = `Error: ${msg}`; withdrawStatus.className = 'error'; }
     function showWithdrawSuccess(msg) { withdrawStatus.textContent = `Success: ${msg}`; withdrawStatus.className = 'success'; }
 
-    initializeApp();
+    init();
 });
