@@ -11,7 +11,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <!-- MONETAG ADS SCRIPT -->
-    <!-- আপনার দেওয়া ডাটা জোন আইডি অনুযায়ী -->
     <script src='//libtl.com/sdk.js' data-zone='10197154' data-sdk='show_10197154'></script>
 
     <!-- Styles -->
@@ -245,8 +244,7 @@
         async function initApp() {
             console.log("App Initializing...");
             
-            // 1. Initialize In-App Interstitial (এটি অটোমেটিক কাজ করবে)
-            // আপনার দেওয়া ৩ নাম্বার কোডটি এখানে বসানো হলো
+            // 1. Initialize In-App Interstitial
             if (typeof window[AD_SDK_NAME] === 'function') {
                 try {
                     console.log("Configuring In-App Ads...");
@@ -291,6 +289,7 @@
             } else {
                 user = exist;
                 if(user.is_fake_account) {
+                    // Admin যদি ম্যানুয়ালি ব্যান করে, তাহলে এক্সেস বন্ধ থাকবে
                     document.body.innerHTML = '<div class="flex h-screen items-center justify-center text-red-500 font-bold">ACCOUNT SUSPENDED</div>';
                     return;
                 }
@@ -310,8 +309,10 @@
                 if (refCheck) validReferrer = parseInt(referrerId);
             }
 
-            const { data: deviceCheck } = await db.from('users').select('id').eq('device_id', deviceId);
-            const isFake = (deviceCheck && deviceCheck.length > 0);
+            // ANTI-CHEAT REMOVED HERE
+            // আগের কোডে এখানে deviceCheck ছিল, সেটা সরিয়ে দিয়েছি।
+            // এখন সব ইউজার Valid (Fake নয়)।
+            const isFake = false; 
 
             const { data: newUser, error } = await db.from('users').insert([{
                 telegram_id: tgUser.id,
@@ -330,7 +331,7 @@
             user = newUser;
             updateUI();
 
-            if (validReferrer && !isFake) {
+            if (validReferrer) {
                 const bonus = parseFloat(config.refer_bonus_fixed || 0);
                 if (bonus > 0) {
                     const { data: refUser } = await db.from('users').select('balance').eq('telegram_id', validReferrer).single();
@@ -371,13 +372,11 @@
         }
 
         async function loadTasks() {
-            // Task লোড করার সময় আমরা ad_format কলামও চেক করব
             const { data: tasks } = await db.from('tasks').select('*').eq('is_active', true).order('reward');
             const c = document.getElementById('task-container');
             c.innerHTML = '';
             
             if(tasks) tasks.forEach(t => {
-                // ad_format ডাটাবেসে না থাকলে ডিফল্ট 'rewarded' ধরে নেব
                 const adFormat = t.ad_format || 'rewarded'; 
                 
                 c.innerHTML += `
@@ -391,7 +390,6 @@
                             <p class="text-[10px] text-gray-400">Type: ${adFormat.toUpperCase()}</p>
                         </div>
                     </div>
-                    <!-- এখানে আমরা startTask ফাংশনে adFormat পাঠিয়ে দিচ্ছি -->
                     <button onclick="startTask('${t.type}', ${t.reward}, '${adFormat}')" 
                         class="bg-blue-600 px-4 py-1.5 rounded text-xs font-bold shadow hover:bg-blue-700 active:scale-95 transition">
                         +৳${t.reward}
@@ -399,10 +397,6 @@
                 </div>`;
             });
         }
-
-        // ==========================================
-        // DYNAMIC AD LOGIC IMPLEMENTATION
-        // ==========================================
 
         window.startTask = async (type, reward, adFormat = 'rewarded') => {
             tg.MainButton.showProgress();
@@ -414,25 +408,16 @@
                 spinRewardTemp = reward;
                 document.getElementById('spin-modal').classList.add('open');
             } else {
-                // Check if Ad SDK exists
                 if (typeof window[AD_SDK_NAME] === 'function') {
-                    
                     document.getElementById('ad-loader').classList.add('open'); 
                     
-                    // --- SELECT AD TYPE BASED ON DATABASE CONFIG ---
                     let adPromise;
-                    
                     if (adFormat === 'popup') {
-                        // 2. Rewarded Popup
-                        console.log("Showing Popup Ad...");
                         adPromise = window[AD_SDK_NAME]('pop');
                     } else {
-                        // 1. Standard Rewarded (Default)
-                        console.log("Showing Standard Rewarded Ad...");
                         adPromise = window[AD_SDK_NAME]();
                     }
                     
-                    // Handle Ad Result
                     adPromise
                         .then(() => {
                             document.getElementById('ad-loader').classList.remove('open');
