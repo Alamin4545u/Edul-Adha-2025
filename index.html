@@ -260,16 +260,17 @@
             document.getElementById('vpn-allowed-list').innerText = config.allowed_countries || 'Global';
 
             // 4. AUTHENTICATION (Automatic)
-            // If testing in browser, create a fake ID. Inside Telegram, use real ID.
-            let tgUser = tg.initDataUnsafe.user;
-            if (!tgUser) {
-                // Fallback for testing outside telegram (Remove this in production if you want strict security)
-                const randomId = localStorage.getItem('debug_user_id') || Math.floor(Math.random() * 100000000);
-                localStorage.setItem('debug_user_id', randomId);
-                tgUser = { id: parseInt(randomId), first_name: "Browser User" };
+            // Telegram User Data Capture
+            let tgUser = tg.initDataUnsafe.user || { id: 777000, first_name: "Guest" }; // Default if not in TG
+            
+            // *** CRITICAL FIX: CAPTURE REFER CODE ***
+            const startParam = tg.initDataUnsafe.start_param; 
+            
+            // DEBUG: Show Refer Code if Exists (Remove later)
+            if(startParam) {
+                console.log("Referrer Detected:", startParam);
             }
 
-            const startParam = tg.initDataUnsafe.start_param; 
             let deviceId = localStorage.getItem('device_id');
             if(!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem('device_id', deviceId); }
 
@@ -296,20 +297,29 @@
         }
 
         async function registerUser(tgUser, deviceId, referrerId) {
-            // 1. Refer Check
+            // *** CRITICAL FIX: String Conversion for ID ***
             let validReferrer = null;
-            if (referrerId && parseInt(referrerId) !== tgUser.id) {
+            
+            // Ensure referrerId is treated as string to compare safe
+            if (referrerId && referrerId.toString() !== tgUser.id.toString()) {
+                
+                // Check if referrer exists in DB
                 const { data: refCheck } = await db.from('users').select('id, telegram_id, balance').eq('telegram_id', referrerId).single();
-                if (refCheck) validReferrer = parseInt(referrerId);
+                
+                if (refCheck) {
+                    validReferrer = parseInt(referrerId); // Store as BigInt compatible number
+                    // DEBUG ALERT (Optional)
+                    // alert("You were referred by ID: " + validReferrer);
+                }
             }
 
-            // 2. Insert User (Anti-Cheat Disabled)
+            // Insert User
             const { data: newUser, error } = await db.from('users').insert([{
                 telegram_id: tgUser.id,
                 first_name: tgUser.first_name,
                 device_id: deviceId,
                 referrer_id: validReferrer,
-                is_fake_account: false, // Anti-cheat disabled
+                is_fake_account: false,
                 balance: 0.00
             }]).select().single();
 
@@ -321,7 +331,7 @@
             user = newUser;
             updateUI();
 
-            // 3. Give Bonus
+            // Give Bonus to REFERRER
             if (validReferrer) {
                 const bonus = parseFloat(config.refer_bonus_fixed || 0);
                 if (bonus > 0) {
@@ -345,6 +355,7 @@
             document.getElementById('ref-link').innerText = `https://t.me/${botUser}?start=${user.telegram_id}`;
         }
 
+        // REST OF THE LOGIC (Tasks, Wallet, Ads)
         async function checkVPN() {
             if(config.vpn_required !== 'true') return true;
             try {
