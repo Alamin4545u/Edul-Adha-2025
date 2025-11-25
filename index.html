@@ -1,594 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Earn Rewards App</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.monetag.com/sdk/monetag-sdk-latest.js"></script>
-    <style>
-        /* Global Styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        body {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: #fff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-        }
-        /* Glassmorphism Cards */
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        /* Premium Buttons */
-        .btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 12px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-        }
-        /* Pages */
-        .page {
-            display: none;
-        }
-        .page.active {
-            display: block;
-        }
-        /* Profile */
-        .profile {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .profile-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-        }
-        /* Grid Menu */
-        .grid-menu {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        /* Spin Wheel */
-        .wheel-container {
-            position: relative;
-            margin: 20px auto;
-            width: 300px;
-            height: 300px;
-        }
-        .wheel {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(
-                #ff6384 0deg 45deg, #ffcd56 45deg 90deg,
-                #4bc0c0 90deg 135deg, #9966ff 135deg 180deg,
-                #ff6384 180deg 225deg, #ffcd56 225deg 270deg,
-                #4bc0c0 270deg 315deg, #9966ff 315deg 360deg
-            );
-            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .arrow {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 40px solid #ff0;
-            z-index: 10;
-        }
-        /* Loading Animation */
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-        .loader {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* List */
-        ul {
-            list-style: none;
-        }
-        li {
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-        /* Form */
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        input, select {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            color: #fff;
-        }
-        /* Smooth Transitions */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Earn Coin App</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.monetag.com/sdk/monetag-sdk-latest.js"></script>
+<style>
+    * {margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+    body {background:#0f0c29;color:#fff;min-height:100vh;padding:10px;background:linear-gradient(135deg,#302b63,#0f0c29);}
+    .container {max-width:420px;margin:0 auto;}
+    .card {background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border-radius:18px;padding:20px;margin:15px 0;box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center;}
+    .btn {background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;border:none;padding:16px;border-radius:12px;width:100%;font-size:18px;margin:8px 0;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.3);}
+    .btn:hover {transform:translateY(-3px);}
+    .grid {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .profile {display:flex;align-items:center;gap:15px;margin:20px 0;}
+    .profile img {width:70px;height:70px;border-radius:50%;border:4px solid #764ba2;}
+    #loading {position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;z-index:9999;}
+    .loader {width:70px;height:70px;border:8px solid #333;border-top:8px solid #764ba2;border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin {to{transform:rotate(360deg);}}
+    .hidden {display:none !important;}
+    .wheel-container {width:300px;height:300px;margin:30px auto;position:relative;}
+    .wheel {width:100%;height:100%;border-radius:50%;background:conic-gradient(#ff6b6b 0% 12.5%,#4ecdc4 12.5% 25%,#45b7d1 25% 37.5%,#f9ca24 37.5% 50%,#6c5ce7 50% 62.5%,#fd79a8 62.5% 75%,#fdcb6e 75% 87.5%,#a29bfe 87.5% 100%);transition:transform 5s cubic-bezier(0.17,0.67,0.12,0.99);}
+    .arrow {position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:25px solid transparent;border-right:25px solid transparent;border-bottom:50px solid gold;z-index:10;}
+    input, select {width:100%;padding:15px;margin:10px 0;border-radius:12px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:16px;}
+</style>
 </head>
 <body>
-    <div id="loading">
-        <div class="loader"></div>
-    </div>
-    <div class="container">
-        <!-- Dashboard Page -->
-        <div id="dashboard" class="page active">
-            <div class="profile">
-                <img id="profile-photo" class="profile-img" src="" alt="Profile">
-                <div>
-                    <h2 id="user-name"></h2>
-                    <p>ID: <span id="user-id"></span></p>
-                </div>
-            </div>
-            <div class="card">
-                <p>Today's Earnings: <span id="today-earnings">0</span> coins</p>
-                <p>Total Balance: <span id="total-balance">0</span> coins</p>
-                <p>Referral Count: <span id="referral-count">0</span></p>
-            </div>
-            <div class="grid-menu">
-                <button class="btn" onclick="showPage('spin')"><i class="fas fa-sync"></i> Spin</button>
-                <button class="btn" onclick="showPage('offerwall')"><i class="fas fa-gift"></i> Offerwall</button>
-                <button class="btn" onclick="showPage('tasks')"><i class="fas fa-tasks"></i> Tasks</button>
-                <button class="btn" onclick="showPage('wallet')"><i class="fas fa-wallet"></i> Wallet</button>
-                <button class="btn" onclick="showPage('withdraw')"><i class="fas fa-money-bill-wave"></i> Withdraw</button>
-                <button class="btn" onclick="showPage('profile')"><i class="fas fa-user"></i> Profile</button>
+
+<div id="loading"><div class="loader"></div></div>
+
+<div class="container hidden" id="app">
+
+    <!-- Dashboard -->
+    <div id="dashboard">
+        <div class="profile">
+            <img id="photo" src="" alt="User">
+            <div>
+                <h2 id="name">Loading...</h2>
+                <p>ID: <span id="tid"></span></p>
             </div>
         </div>
+        <div class="card">
+            <h2>Balance: <span id="balance">0</span> Coins</h2>
+            <h3>Today's Earnings: <span id="today">0</span> Coins</h3>
+        </div>
+        <div class="grid">
+            <button class="btn" onclick="go('spin')">Spin Wheel</button>
+            <button class="btn" onclick="offerwall()">Offerwall</button>
+            <button class="btn" onclick="go('tasks')">Daily Tasks</button>
+            <button class="btn" onclick="go('wallet')">Wallet</button>
+            <button class="btn" onclick="go('withdraw')">Withdraw</button>
+            <button class="btn" onclick="alert('Referral system coming soon!')">Refer & Earn</button>
+        </div>
+    </div>
 
-        <!-- Spin Page -->
-        <div id="spin" class="page">
-            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+    <!-- Spin Page -->
+    <div id="spin" class="hidden">
+        <button class="btn" onclick="go('dashboard')">Back to Home</button>
+        <div class="card">
+            <h2>Spin & Win Up to 500 Coins!</h2>
             <div class="wheel-container">
                 <div class="arrow"></div>
                 <div id="wheel" class="wheel"></div>
             </div>
-            <p id="spin-message">You have 1 free spin daily!</p>
-            <button id="spin-btn" class="btn" onclick="doSpin()"><i class="fas fa-sync"></i> Spin Now</button>
-            <button id="extra-spin-btn" class="btn" onclick="watchAdForExtraSpin()"><i class="fas fa-video"></i> Watch Ad for Extra Spin</button>
-        </div>
-
-        <!-- Offerwall Page -->
-        <div id="offerwall" class="page">
-            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-            <div class="card">
-                <h2>Offerwall</h2>
-                <p>Complete offers to earn more coins!</p>
-                <button class="btn" onclick="showRewardedPopup()"><i class="fas fa-gift"></i> Open Offerwall</button>
-            </div>
-        </div>
-
-        <!-- Tasks Page -->
-        <div id="tasks" class="page">
-            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-            <div class="card">
-                <h2>Daily Tasks</h2>
-                <ul id="tasks-list"></ul>
-            </div>
-        </div>
-
-        <!-- Wallet Page -->
-        <div id="wallet" class="page">
-            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-            <div class="card">
-                <h2>Wallet</h2>
-                <p>Total Balance: <span id="wallet-balance">0</span> coins</p>
-                <p>Today's Income: <span id="wallet-today">0</span> coins</p>
-                <h3>History</h3>
-                <ul id="history-list"></ul>
-            </div>
-            <button class="btn" onclick="showPage('withdraw')"><i class="fas fa-money-bill-wave"></i> Withdraw</button>
-        </div>
-
-        <!-- Withdraw Page -->
-        <div id="withdraw" class="page">
-            <button class="btn" onclick="showPage('wallet')"><i class="fas fa-arrow-left"></i> Back</button>
-            <div class="card">
-                <h2>Withdraw</h2>
-                <form id="withdraw-form">
-                    <input type="number" id="withdraw-amount" placeholder="Amount" required min="1">
-                    <select id="withdraw-method" required>
-                        <option value="">Select Method</option>
-                        <option value="Bkash">Bkash</option>
-                        <option value="Nagad">Nagad</option>
-                        <option value="Rocket">Rocket</option>
-                    </select>
-                    <button type="submit" class="btn"><i class="fas fa-check"></i> Submit Request</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Profile Page -->
-        <div id="profile" class="page">
-            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-            <div class="card">
-                <h2>Profile</h2>
-                <img id="profile-photo-large" class="profile-img" style="width:100px; height:100px;" src="" alt="Profile">
-                <p>Name: <span id="profile-name"></span></p>
-                <p>ID: <span id="profile-id"></span></p>
-                <p>Balance: <span id="profile-balance">0</span> coins</p>
-                <p>Referrals: <span id="profile-referrals">0</span></p>
-            </div>
+            <p id="spinText">You have 1 free spin today!</p>
+            <button class="btn" id="spinBtn" onclick="spinNow()">SPIN NOW</button>
+            <button class="btn" onclick="adForSpin()">Watch Ad = Extra Spin</button>
         </div>
     </div>
 
-    <script>
-        // Supabase Placeholders (using provided values)
-        const SUPABASE_URL = 'https://nkzdxxuwylkdkncbshjd.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI';
+    <!-- Tasks -->
+    <div id="tasks" class="hidden">
+        <button class="btn" onclick="go('dashboard')">Back</button>
+        <div class="card">
+            <h2>Complete Tasks & Earn</h2>
+            <div id="taskList"></div>
+        </div>
+    </div>
 
-        // Initialize Supabase
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Wallet -->
+    <div id="wallet" class="hidden">
+        <button class="btn" onclick="go('dashboard')">Back</button>
+        <div class="card">
+            <h2>Total Balance: <span id="wbalance">0</span> Coins</h2>
+            <button class="btn" onclick="go('withdraw')">Withdraw Now</button>
+        </div>
+    </div>
 
-        // Telegram WebApp
-        let tg = window.Telegram ? window.Telegram.WebApp : null;
-        if (tg) tg.ready();
-        let tgUser = tg ? tg.initDataUnsafe.user : { id: 123456, first_name: 'Test User', photo_url: '' };
+    <!-- Withdraw -->
+    <div id="withdraw" class="hidden">
+        <button class="btn" onclick="go('wallet')">Back</button>
+        <div class="card">
+            <h2>Withdraw Money</h2>
+            <input type="number" id="amount" placeholder="Enter Amount (Min 200)">
+            <select id="method">
+                <option>Bkash</option>
+                <option>Nagad</option>
+                <option>Rocket</option>
+            </select>
+            <button class="btn" onclick="sendWithdraw()">Submit Request</button>
+        </div>
+    </div>
 
-        // Current User Data
-        let currentUser = null;
+</div>
 
-        // Prizes for Spin
-        const prizes = [10, 20, 5, 50, 1, 100, 0, 25];
-        const sectors = prizes.length;
+<script>
+// Supabase Config
+const supabase = window.supabase.createClient(
+    'https://nkzdxxuwylkdkncbshjd.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInZlciI6MCwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI'
+);
 
-        // Tasks
-        const tasks = [
-            { id: 1, name: 'Task 1: Watch Video', reward: 10 },
-            { id: 2, name: 'Task 2: Complete Survey', reward: 15 },
-            { id: 3, name: 'Task 3: Play Game', reward: 20 },
-            { id: 4, name: 'Task 4: Share App', reward: 25 },
-            { id: 5, name: 'Task 5: Rate Us', reward: 30 }
-        ];
+let user = null;
+let tg = window.Telegram?.WebApp;
+if(tg) tg.ready();
 
-        // Navigation
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            if (pageId === 'tasks') loadTasks();
-            if (pageId === 'wallet') loadWallet();
-            if (pageId === 'profile') loadProfile();
-            if (pageId === 'spin') updateSpinButtons();
-        }
+const prizes = [10, 25, 0, 50, 100, 5, 200, 0];
+let canSpinToday = true;
+let extraSpin = false;
 
-        // Supabase Functions
-        async function createUserIfNotExists() {
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('telegram_id', tgUser.id);
+const tasks = [
+    {id:1, name:"Watch Video Ad", reward:15},
+    {id:2, name:"Complete Offer", reward:30},
+    {id:3, name:"Daily Login Bonus", reward:10},
+    {id:4, name:"Invite 1 Friend", reward:100},
+    {id:5, name:"Rate Our App", reward:20}
+];
 
-            if (error) console.error(error);
-            if (data.length === 0) {
-                await supabase.from('users').insert({
-                    telegram_id: tgUser.id,
-                    name: tgUser.first_name,
-                    photo_url: tgUser.photo_url || '',
-                    balance: 0,
-                    today_earnings: 0,
-                    referral_count: 0,
-                    last_spin: null,
-                    ad_watches_today: 0,
-                    last_ad_day: null,
-                    last_login: null,
-                    completed_tasks: ''
-                });
-            }
-        }
+async function startApp() {
+    try {
+        const telegramId = tg?.initDataUnsafe?.user?.id || 123456789;
+        const name = tg?.initDataUnsafe?.user?.first_name || "User";
+        const photo = tg?.initDataUnsafe?.user?.photo_url || "";
 
-        async function getUserData() {
-            const { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('telegram_id', tgUser.id)
-                .single();
-
-            if (error) console.error(error);
-            return data;
-        }
-
-        async function updateUserData(updates) {
-            const { error } = await supabase
-                .from('users')
-                .update(updates)
-                .eq('telegram_id', tgUser.id);
-
-            if (error) console.error(error);
-        }
-
-        async function saveWithdrawRequest(amount, method) {
-            const { error } = await supabase.from('withdraw_requests').insert({
-                user_id: tgUser.id,
-                amount,
-                method,
-                status: 'pending',
-                date: new Date().toISOString()
+        let {data} = await supabase.from('users').select('*').eq('telegram_id', telegramId);
+        
+        if(!data || data.length === 0) {
+            await supabase.from('users').insert({
+                telegram_id: telegramId,
+                name: name,
+                photo_url: photo,
+                balance: 50,
+                today_earnings: 0
             });
-            if (error) console.error(error);
+            user = {telegram_id:telegramId, name, photo_url:photo, balance:50, today_earnings:0};
+        } else {
+            user = data[0];
         }
 
-        async function addTransaction(amount, type) {
-            const { error } = await supabase.from('transactions').insert({
-                user_id: tgUser.id,
-                amount,
-                type,
-                date: new Date().toISOString()
+        // Update UI
+        document.getElementById('photo').src = photo || 'https://via.placeholder.com/70';
+        document.getElementById('name').innerText = user.name || "User";
+        document.getElementById('tid').innerText = telegramId;
+        document.getElementById('balance').innerText = user.balance || 0;
+        document.getElementById('today').innerText = user.today_earnings || 0;
+        document.getElementById('wbalance').innerText = user.balance || 0;
+
+        loadTasks();
+
+        // Hide loading
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+
+    } catch(e) {
+        alert("Connection Error. Check internet.");
+        console.error(e);
+    }
+}
+
+function go(page) {
+    document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
+    document.getElementById(page).classList.remove('hidden');
+    if(page === 'tasks') loadTasks();
+}
+
+async function addCoins(amount, reason = "task") {
+    user.balance += amount;
+    user.today_earnings = (user.today_earnings || 0) + amount;
+    await supabase.from('users').update({
+        balance: user.balance,
+        today_earnings: user.today_earnings
+    }).eq('telegram_id', user.telegram_id);
+
+    document.getElementById('balance').innerText = user.balance;
+    document.getElementById('today').innerText = user.today_earnings;
+    document.getElementById('wbalance').innerText = user.balance;
+}
+
+// Ads
+function offerwall() {
+    show_10235243('pop').then(() => {
+        addCoins(30);
+        alert("30 Coins Added!");
+    }).catch(() => {});
+}
+
+function adForSpin() {
+    show_10235243().then(() => {
+        extraSpin = true;
+        alert("Extra Spin Unlocked!");
+        document.getElementById('spinBtn').disabled = false;
+    });
+}
+
+function spinNow() {
+    if(!canSpinToday && !extraSpin) return alert("No spins left today!");
+    
+    document.getElementById('spinBtn').disabled = true;
+    const deg = 1800 + Math.floor(Math.random() * 360);
+    document.getElementById('wheel').style.transform = `rotate(${deg}deg)`;
+
+    setTimeout(() => {
+        const win = prizes[Math.floor(Math.random() * prizes.length)];
+        alert(`You Won ${win} Coins!`);
+        if(win > 0) addCoins(win, "spin");
+        if(!extraSpin) canSpinToday = false;
+        extraSpin = false;
+        document.getElementById('spinBtn').disabled = false;
+    }, 5000);
+}
+
+function loadTasks() {
+    const list = document.getElementById('taskList');
+    list.innerHTML = '';
+    tasks.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.innerHTML = `\( {t.name} → + \){t.reward} Coins`;
+        btn.onclick = () => {
+            show_10235243().then(() => {
+                addCoins(t.reward);
+                btn.innerHTML = 'Completed';
+                btn.disabled = true;
             });
-            if (error) console.error(error);
-        }
+        };
+        list.appendChild(btn);
+    });
+}
 
-        // Reward User
-        async function rewardUser(amount, fromAd = true) {
-            if (fromAd && currentUser.ad_watches_today >= 10) {
-                alert('Daily ad limit reached!');
-                return false;
-            }
-            currentUser.balance += amount;
-            currentUser.today_earnings += amount;
-            if (fromAd) currentUser.ad_watches_today += 1;
-            await updateUserData({
-                balance: currentUser.balance,
-                today_earnings: currentUser.today_earnings,
-                ad_watches_today: currentUser.ad_watches_today
-            });
-            await addTransaction(amount, 'earn');
-            updateDashboard();
-            return true;
-        }
+async function sendWithdraw() {
+    const amt = parseInt(document.getElementById('amount').value);
+    if(!amt || amt < 200 || amt > user.balance) {
+        alert("Minimum 200 Coins & sufficient balance required!");
+        return;
+    }
+    await supabase.from('withdraw_requests').insert({
+        user_id: user.telegram_id,
+        amount: amt,
+        method: document.getElementById('method').value
+    });
+    user.balance -= amt;
+    await supabase.from('users').update({balance: user.balance}).eq('telegram_id', user.telegram_id);
+    alert("Withdraw Request Sent! Will be processed in 24-48 hours.");
+    go('dashboard');
+}
 
-        // Ad Functions
-        function showInterstitial() {
-            show_10235243({
-                type: 'inApp',
-                inAppSettings: {
-                    frequency: 2,
-                    capping: 0.1,
-                    interval: 30,
-                    timeout: 5,
-                    everyPage: false
-                }
-            });
-        }
-
-        function showRewardedPopup() {
-            show_10235243('pop').then(async () => {
-                await rewardUser(20);
-            }).catch(e => {
-                console.error(e);
-            });
-        }
-
-        function showRewardedAd(callback = null) {
-            show_10235243().then(async () => {
-                await rewardUser(10);
-                if (callback) callback();
-            }).catch(e => {
-                console.error(e);
-            });
-        }
-
-        // Spin Functions
-        let isSpinning = false;
-        async function doSpin() {
-            if (isSpinning) return;
-            const today = new Date().toISOString().split('T')[0];
-            let canSpin = false;
-            if (currentUser.last_spin !== today) {
-                canSpin = true;
-                currentUser.last_spin = today;
-                await updateUserData({ last_spin: today });
-            } else if (extraSpinAllowed) {
-                canSpin = true;
-                extraSpinAllowed = false;
-            }
-            if (!canSpin) {
-                alert('No spins left today!');
-                return;
-            }
-            isSpinning = true;
-            const wheel = document.getElementById('wheel');
-            const randomIndex = Math.floor(Math.random() * prizes.length);
-            const prize = prizes[randomIndex];
-            const degrees = 360 * 5 + (360 / sectors * (sectors - randomIndex - 0.5));
-            wheel.style.transform = `rotate(${degrees}deg)`;
-            setTimeout(async () => {
-                alert(`You won ${prize} coins!`);
-                if (prize > 0) await rewardUser(prize, false);
-                wheel.style.transform = 'rotate(0deg)';
-                isSpinning = false;
-                updateSpinButtons();
-            }, 4500);
-        }
-
-        let extraSpinAllowed = false;
-        function watchAdForExtraSpin() {
-            showRewardedAd(() => {
-                extraSpinAllowed = true;
-                updateSpinButtons();
-            });
-        }
-
-        function updateSpinButtons() {
-            const today = new Date().toISOString().split('T')[0];
-            const freeAvailable = currentUser.last_spin !== today;
-            document.getElementById('spin-message').textContent = freeAvailable ? 'You have 1 free spin!' : 'No free spins left.';
-            document.getElementById('spin-btn').disabled = !freeAvailable && !extraSpinAllowed;
-            document.getElementById('extra-spin-btn').disabled = !freeAvailable && extraSpinAllowed;  // Hide if free available?
-        }
-
-        // Tasks
-        async function loadTasks() {
-            const list = document.getElementById('tasks-list');
-            list.innerHTML = '';
-            const completed = currentUser.completed_tasks.split(',').filter(Boolean).map(Number);
-            tasks.forEach(task => {
-                const li = document.createElement('li');
-                li.textContent = `\( {task.name} - \){task.reward} coins`;
-                if (!completed.includes(task.id)) {
-                    const btn = document.createElement('button');
-                    btn.classList.add('btn');
-                    btn.innerHTML = '<i class="fas fa-video"></i> Watch Ad';
-                    btn.onclick = () => {
-                        showRewardedAd(async () => {
-                            completed.push(task.id);
-                            currentUser.completed_tasks = completed.join(',');
-                            await updateUserData({ completed_tasks: currentUser.completed_tasks });
-                            await rewardUser(task.reward);
-                            loadTasks();
-                        });
-                    };
-                    li.appendChild(btn);
-                } else {
-                    li.innerHTML += ' - Completed';
-                }
-                list.appendChild(li);
-            });
-        }
-
-        // Wallet
-        async function loadWallet() {
-            document.getElementById('wallet-balance').textContent = currentUser.balance;
-            document.getElementById('wallet-today').textContent = currentUser.today_earnings;
-            const list = document.getElementById('history-list');
-            list.innerHTML = '';
-            const { data, error } = await supabase.from('transactions').select('*').eq('user_id', tgUser.id).order('date', { ascending: false });
-            if (error) console.error(error);
-            data.forEach(tx => {
-                const li = document.createElement('li');
-                li.textContent = `\( {tx.date.split('T')[0]} - \){tx.type.toUpperCase()}: ${tx.amount} coins`;
-                list.appendChild(li);
-            });
-        }
-
-        // Profile
-        function loadProfile() {
-            document.getElementById('profile-photo-large').src = currentUser.photo_url || '';
-            document.getElementById('profile-name').textContent = currentUser.name;
-            document.getElementById('profile-id').textContent = currentUser.telegram_id;
-            document.getElementById('profile-balance').textContent = currentUser.balance;
-            document.getElementById('profile-referrals').textContent = currentUser.referral_count;
-        }
-
-        // Dashboard Update
-        function updateDashboard() {
-            document.getElementById('profile-photo').src = currentUser.photo_url || '';
-            document.getElementById('user-name').textContent = currentUser.name;
-            document.getElementById('user-id').textContent = currentUser.telegram_id;
-            document.getElementById('today-earnings').textContent = currentUser.today_earnings;
-            document.getElementById('total-balance').textContent = currentUser.balance;
-            document.getElementById('referral-count').textContent = currentUser.referral_count;
-        }
-
-        // Withdraw Form
-        document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const amount = parseInt(document.getElementById('withdraw-amount').value);
-            const method = document.getElementById('withdraw-method').value;
-            if (amount > currentUser.balance || amount <= 0) {
-                alert('Invalid amount!');
-                return;
-            }
-            currentUser.balance -= amount;
-            await updateUserData({ balance: currentUser.balance });
-            await addTransaction(-amount, 'withdraw');
-            await saveWithdrawRequest(amount, method);
-            alert('Withdraw request submitted!');
-            showPage('wallet');
-        });
-
-        // Init App
-        async function initApp() {
-            await createUserIfNotExists();
-            currentUser = await getUserData();
-            const today = new Date().toISOString().split('T')[0];
-            if (currentUser.last_login !== today) {
-                await updateUserData({
-                    today_earnings: 0,
-                    last_login: today,
-                    ad_watches_today: 0,
-                    completed_tasks: ''
-                });
-                currentUser.today_earnings = 0;
-                currentUser.ad_watches_today = 0;
-                currentUser.completed_tasks = '';
-            }
-            updateDashboard();
-            updateSpinButtons();
-            // Init Interstitial Ads
-            showInterstitial();
-            document.getElementById('loading').style.display = 'none';
-        }
-
-        // Start
-        initApp();
-    </script>
+// Start App
+startApp();
+</script>
 </body>
 </html>
