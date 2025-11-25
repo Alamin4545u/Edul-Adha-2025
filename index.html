@@ -1,263 +1,640 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Earn Coin App</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.monetag.com/sdk/monetag-sdk-latest.js"></script>
-<style>
-    * {margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
-    body {background:#0f0c29;color:#fff;min-height:100vh;padding:10px;background:linear-gradient(135deg,#302b63,#0f0c29);}
-    .container {max-width:420px;margin:0 auto;}
-    .card {background:rgba(255,255,255,0.1);backdrop-filter:blur(12px);border-radius:18px;padding:20px;margin:15px 0;box-shadow:0 10px 30px rgba(0,0,0,0.5);text-align:center;}
-    .btn {background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;border:none;padding:16px;border-radius:12px;width:100%;font-size:18px;margin:8px 0;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.3);}
-    .btn:hover {transform:translateY(-3px);}
-    .grid {display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .profile {display:flex;align-items:center;gap:15px;margin:20px 0;}
-    .profile img {width:70px;height:70px;border-radius:50%;border:4px solid #764ba2;}
-    #loading {position:fixed;top:0;left:0;width:100%;height:100%;background:#000;display:flex;justify-content:center;align-items:center;z-index:9999;}
-    .loader {width:70px;height:70px;border:8px solid #333;border-top:8px solid #764ba2;border-radius:50%;animation:spin 1s linear infinite;}
-    @keyframes spin {to{transform:rotate(360deg);}}
-    .hidden {display:none !important;}
-    .wheel-container {width:300px;height:300px;margin:30px auto;position:relative;}
-    .wheel {width:100%;height:100%;border-radius:50%;background:conic-gradient(#ff6b6b 0% 12.5%,#4ecdc4 12.5% 25%,#45b7d1 25% 37.5%,#f9ca24 37.5% 50%,#6c5ce7 50% 62.5%,#fd79a8 62.5% 75%,#fdcb6e 75% 87.5%,#a29bfe 87.5% 100%);transition:transform 5s cubic-bezier(0.17,0.67,0.12,0.99);}
-    .arrow {position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:25px solid transparent;border-right:25px solid transparent;border-bottom:50px solid gold;z-index:10;}
-    input, select {width:100%;padding:15px;margin:10px 0;border-radius:12px;border:none;background:rgba(255,255,255,0.1);color:#fff;font-size:16px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Premium Earning App</title>
+    
+    <!-- Telegram SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 (For nice alerts) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Monetag Ad SDK -->
+    <script src='//libtl.com/sdk.js' data-zone='10235243' data-sdk='show_10235243'></script>
+
+    <style>
+        :root {
+            --bg-color: #0f0c29;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #00d2ff;
+            --secondary: #3a7bd5;
+            --text: #ffffff;
+            --text-muted: #a0a0a0;
+            --success: #00b894;
+            --danger: #d63031;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 80px; /* Space for bottom nav */
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- Loader --- */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 9999;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+
+        /* --- Layout --- */
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; animation: fadeIn 0.5s ease; }
+        .hidden { display: none !important; }
+
+        /* --- Glass Cards --- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* --- Header --- */
+        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; border: 2px solid var(--primary); }
+        .user-info h2 { font-size: 18px; font-weight: 600; }
+        .user-info p { font-size: 12px; color: var(--text-muted); }
+
+        /* --- Dashboard Stats --- */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { text-align: center; padding: 15px; border-radius: 15px; background: rgba(0, 210, 255, 0.1); border: 1px solid rgba(0, 210, 255, 0.2); }
+        .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); margin: 5px 0; }
+        .stat-label { font-size: 12px; color: var(--text-muted); }
+
+        /* --- Menu Grid --- */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .menu-item {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 15px; padding: 20px; text-align: center; cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .menu-item:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .menu-item i { font-size: 28px; margin-bottom: 10px; background: linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .menu-item span { display: block; font-size: 14px; font-weight: 500; }
+
+        /* --- Buttons --- */
+        .btn {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer; color: white;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); transition: 0.3s;
+        }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); }
+        .btn-outline { background: transparent; border: 1px solid var(--glass-border); }
+
+        /* --- Spin Wheel --- */
+        .wheel-container { position: relative; width: 250px; height: 250px; margin: 20px auto; }
+        .wheel {
+            width: 100%; height: 100%; border-radius: 50%;
+            border: 5px solid var(--glass-border);
+            background: conic-gradient(
+                #ff6b6b 0deg 60deg, 
+                #feca57 60deg 120deg, 
+                #48dbfb 120deg 180deg, 
+                #ff9ff3 180deg 240deg, 
+                #54a0ff 240deg 300deg, 
+                #1dd1a1 300deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .marker {
+            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 15px solid transparent;
+            border-right: 15px solid transparent; border-top: 20px solid white; z-index: 2;
+        }
+
+        /* --- Tasks List --- */
+        .task-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px; border-bottom: 1px solid var(--glass-border);
+        }
+        .task-item:last-child { border-bottom: none; }
+        .coin-badge { background: rgba(255, 215, 0, 0.2); color: #ffd700; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+
+        /* --- Forms --- */
+        input, select {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            color: white; border-radius: 10px; outline: none;
+        }
+        input:focus { border-color: var(--primary); }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(15, 12, 41, 0.95); backdrop-filter: blur(10px);
+            border-top: 1px solid var(--glass-border);
+            display: flex; justify-content: space-around; padding: 12px 0; z-index: 100;
+        }
+        .nav-item { color: var(--text-muted); font-size: 20px; background: none; border: none; cursor: pointer; position: relative; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active::after {
+            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+            width: 5px; height: 5px; background: var(--primary); border-radius: 50%;
+        }
+
+        /* --- Back Button --- */
+        .back-btn { margin-bottom: 15px; background: none; border: none; color: white; font-size: 16px; display: flex; align-items: center; gap: 5px; }
+
+    </style>
 </head>
 <body>
 
-<div id="loading"><div class="loader"></div></div>
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; font-size: 14px; opacity: 0.7;">Loading App...</p>
+    </div>
 
-<div class="container hidden" id="app">
-
-    <!-- Dashboard -->
-    <div id="dashboard">
-        <div class="profile">
-            <img id="photo" src="" alt="User">
-            <div>
-                <h2 id="name">Loading...</h2>
-                <p>ID: <span id="tid"></span></p>
+    <!-- 1. DASHBOARD PAGE -->
+    <div id="page-dashboard" class="container">
+        <!-- Header -->
+        <div class="profile-header">
+            <div class="avatar" id="userAvatar">U</div>
+            <div class="user-info">
+                <h2 id="userName">Loading...</h2>
+                <p>ID: <span id="userId">...</span></p>
             </div>
         </div>
-        <div class="card">
-            <h2>Balance: <span id="balance">0</span> Coins</h2>
-            <h3>Today's Earnings: <span id="today">0</span> Coins</h3>
-        </div>
-        <div class="grid">
-            <button class="btn" onclick="go('spin')">Spin Wheel</button>
-            <button class="btn" onclick="offerwall()">Offerwall</button>
-            <button class="btn" onclick="go('tasks')">Daily Tasks</button>
-            <button class="btn" onclick="go('wallet')">Wallet</button>
-            <button class="btn" onclick="go('withdraw')">Withdraw</button>
-            <button class="btn" onclick="alert('Referral system coming soon!')">Refer & Earn</button>
-        </div>
-    </div>
 
-    <!-- Spin Page -->
-    <div id="spin" class="hidden">
-        <button class="btn" onclick="go('dashboard')">Back to Home</button>
-        <div class="card">
-            <h2>Spin & Win Up to 500 Coins!</h2>
-            <div class="wheel-container">
-                <div class="arrow"></div>
-                <div id="wheel" class="wheel"></div>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Balance</div>
+                <div class="stat-val">$<span id="displayBalance">0.00</span></div>
             </div>
-            <p id="spinText">You have 1 free spin today!</p>
-            <button class="btn" id="spinBtn" onclick="spinNow()">SPIN NOW</button>
-            <button class="btn" onclick="adForSpin()">Watch Ad = Extra Spin</button>
+            <div class="stat-box">
+                <div class="stat-label">Earnings Today</div>
+                <div class="stat-val">$<span id="todayEarnings">0.00</span></div>
+            </div>
         </div>
-    </div>
 
-    <!-- Tasks -->
-    <div id="tasks" class="hidden">
-        <button class="btn" onclick="go('dashboard')">Back</button>
-        <div class="card">
-            <h2>Complete Tasks & Earn</h2>
-            <div id="taskList"></div>
+        <!-- Menu -->
+        <div class="menu-grid">
+            <div class="menu-item" onclick="navTo('spin')">
+                <i class="fas fa-dharmachakra"></i>
+                <span>Spin & Win</span>
+            </div>
+            <div class="menu-item" onclick="navTo('tasks')">
+                <i class="fas fa-tasks"></i>
+                <span>Daily Tasks</span>
+            </div>
+            <div class="menu-item" onclick="navTo('offerwall')">
+                <i class="fas fa-gift"></i>
+                <span>Offerwall</span>
+            </div>
+            <div class="menu-item" onclick="navTo('wallet')">
+                <i class="fas fa-wallet"></i>
+                <span>Wallet</span>
+            </div>
         </div>
-    </div>
-
-    <!-- Wallet -->
-    <div id="wallet" class="hidden">
-        <button class="btn" onclick="go('dashboard')">Back</button>
-        <div class="card">
-            <h2>Total Balance: <span id="wbalance">0</span> Coins</h2>
-            <button class="btn" onclick="go('withdraw')">Withdraw Now</button>
-        </div>
-    </div>
-
-    <!-- Withdraw -->
-    <div id="withdraw" class="hidden">
-        <button class="btn" onclick="go('wallet')">Back</button>
-        <div class="card">
-            <h2>Withdraw Money</h2>
-            <input type="number" id="amount" placeholder="Enter Amount (Min 200)">
-            <select id="method">
-                <option>Bkash</option>
-                <option>Nagad</option>
-                <option>Rocket</option>
-            </select>
-            <button class="btn" onclick="sendWithdraw()">Submit Request</button>
-        </div>
-    </div>
-
-</div>
-
-<script>
-// Supabase Config
-const supabase = window.supabase.createClient(
-    'https://nkzdxxuwylkdkncbshjd.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInZlciI6MCwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI'
-);
-
-let user = null;
-let tg = window.Telegram?.WebApp;
-if(tg) tg.ready();
-
-const prizes = [10, 25, 0, 50, 100, 5, 200, 0];
-let canSpinToday = true;
-let extraSpin = false;
-
-const tasks = [
-    {id:1, name:"Watch Video Ad", reward:15},
-    {id:2, name:"Complete Offer", reward:30},
-    {id:3, name:"Daily Login Bonus", reward:10},
-    {id:4, name:"Invite 1 Friend", reward:100},
-    {id:5, name:"Rate Our App", reward:20}
-];
-
-async function startApp() {
-    try {
-        const telegramId = tg?.initDataUnsafe?.user?.id || 123456789;
-        const name = tg?.initDataUnsafe?.user?.first_name || "User";
-        const photo = tg?.initDataUnsafe?.user?.photo_url || "";
-
-        let {data} = await supabase.from('users').select('*').eq('telegram_id', telegramId);
         
-        if(!data || data.length === 0) {
-            await supabase.from('users').insert({
-                telegram_id: telegramId,
-                name: name,
-                photo_url: photo,
-                balance: 50,
-                today_earnings: 0
-            });
-            user = {telegram_id:telegramId, name, photo_url:photo, balance:50, today_earnings:0};
-        } else {
-            user = data[0];
+        <!-- Native Banner Ad Placement -->
+        <div class="glass-card" style="margin-top: 20px; text-align: center; padding: 10px;">
+            <small style="color:gray">Sponsored</small>
+            <div id="native-ad-container"></div>
+        </div>
+    </div>
+
+    <!-- 2. SPIN PAGE -->
+    <div id="page-spin" class="container hidden">
+        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+        <div class="glass-card" style="text-align: center;">
+            <h2>Lucky Spin</h2>
+            <p style="font-size: 13px; color: #ccc;">Spin to win real cash!</p>
+            
+            <div class="wheel-container">
+                <div class="marker"></div>
+                <div class="wheel" id="wheelElement"></div>
+            </div>
+
+            <p style="margin-bottom: 10px;">Spins Left: <span id="spinsLeft" style="color: var(--primary); font-weight: bold;">0</span></p>
+            
+            <button class="btn" id="spinBtn" onclick="spinWheel()">SPIN NOW</button>
+            <button class="btn btn-outline" style="margin-top: 10px;" onclick="watchAdForSpin()">
+                <i class="fas fa-video"></i> Watch Ad (+1 Spin)
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. TASKS PAGE -->
+    <div id="page-tasks" class="container hidden">
+        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+        <h2>Daily Tasks</h2>
+        <div class="glass-card" style="padding: 0;">
+            <div id="taskList">
+                <!-- JS will populate this -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. OFFERWALL PAGE -->
+    <div id="page-offerwall" class="container hidden">
+        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+        <div class="glass-card" style="text-align: center;">
+            <i class="fas fa-gem" style="font-size: 50px; color: var(--secondary); margin-bottom: 15px;"></i>
+            <h3>Premium Offers</h3>
+            <p style="margin-bottom: 20px; color: #ccc;">Complete high paying offers to earn massive rewards.</p>
+            <button class="btn" onclick="openOfferwall()">Open Offerwall</button>
+        </div>
+    </div>
+
+    <!-- 5. WALLET PAGE -->
+    <div id="page-wallet" class="container hidden">
+        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+        
+        <div class="glass-card" style="background: linear-gradient(135deg, var(--secondary), var(--primary)); border: none;">
+            <p>Total Balance</p>
+            <h1 style="font-size: 36px;">$<span id="walletBalance">0.00</span></h1>
+        </div>
+
+        <h3>Withdraw</h3>
+        <div class="glass-card">
+            <select id="wdMethod">
+                <option value="bkash">Bkash</option>
+                <option value="nagad">Nagad</option>
+                <option value="rocket">Rocket</option>
+            </select>
+            <input type="number" id="wdAmount" placeholder="Amount (Min $5)">
+            <input type="number" id="wdNumber" placeholder="Wallet Number">
+            <button class="btn" onclick="submitWithdraw()">Request Withdraw</button>
+        </div>
+
+        <h3>History</h3>
+        <div id="wdHistory">
+            <!-- JS Populated -->
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="navTo('dashboard')"><i class="fas fa-home"></i></button>
+        <button class="nav-item" onclick="navTo('tasks')"><i class="fas fa-list"></i></button>
+        <button class="nav-item" onclick="navTo('wallet')"><i class="fas fa-user"></i></button>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. CONFIGURATION & INIT
+        // ==========================================
+        const SUPABASE_URL = 'https://nkzdxxuwylkdkncbshjd.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const tg = window.Telegram.WebApp;
+
+        let currentUser = null;
+        let userBalance = 0;
+        let spinsLeft = 0;
+
+        // Initialize App
+        async function initApp() {
+            tg.expand();
+            
+            // Get Telegram User (or mock for testing)
+            const tgUser = tg.initDataUnsafe.user || { id: 12345678, first_name: "Test User", username: "test_user" };
+            
+            if(!tgUser) {
+                alert("Please open in Telegram");
+                return;
+            }
+
+            // Sync with Supabase
+            await loginOrCreateUser(tgUser);
+            
+            // Load UI
+            updateUI();
+            
+            // Setup In-App Interstitial (Provided Code)
+            setupAds();
+
+            // Hide Loader
+            document.getElementById('loader').style.display = 'none';
         }
 
-        // Update UI
-        document.getElementById('photo').src = photo || 'https://via.placeholder.com/70';
-        document.getElementById('name').innerText = user.name || "User";
-        document.getElementById('tid').innerText = telegramId;
-        document.getElementById('balance').innerText = user.balance || 0;
-        document.getElementById('today').innerText = user.today_earnings || 0;
-        document.getElementById('wbalance').innerText = user.balance || 0;
+        // ==========================================
+        // 2. SUPABASE FUNCTIONS
+        // ==========================================
+        async function loginOrCreateUser(tgUser) {
+            // Check if user exists
+            let { data: user, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', tgUser.id)
+                .single();
 
-        loadTasks();
+            if (!user) {
+                // Create new user
+                const { data: newUser, error: createError } = await supabase
+                    .from('users')
+                    .insert([{
+                        id: tgUser.id,
+                        first_name: tgUser.first_name,
+                        username: tgUser.username,
+                        balance: 0,
+                        spins_left: 1
+                    }])
+                    .select()
+                    .single();
+                
+                currentUser = newUser;
+            } else {
+                currentUser = user;
+            }
 
-        // Hide loading
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
+            // Set local vars
+            userBalance = currentUser.balance || 0;
+            spinsLeft = currentUser.spins_left || 0;
+        }
 
-    } catch(e) {
-        alert("Connection Error. Check internet.");
-        console.error(e);
-    }
-}
+        async function updateBalance(amount) {
+            const newBalance = userBalance + amount;
+            
+            // Optimistic UI update
+            userBalance = newBalance;
+            updateUI();
 
-function go(page) {
-    document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
-    document.getElementById(page).classList.remove('hidden');
-    if(page === 'tasks') loadTasks();
-}
+            await supabase
+                .from('users')
+                .update({ balance: newBalance })
+                .eq('id', currentUser.id);
+        }
 
-async function addCoins(amount, reason = "task") {
-    user.balance += amount;
-    user.today_earnings = (user.today_earnings || 0) + amount;
-    await supabase.from('users').update({
-        balance: user.balance,
-        today_earnings: user.today_earnings
-    }).eq('telegram_id', user.telegram_id);
+        async function updateSpins(count) {
+            spinsLeft = count;
+            document.getElementById('spinsLeft').innerText = spinsLeft;
+            
+            await supabase
+                .from('users')
+                .update({ spins_left: count })
+                .eq('id', currentUser.id);
+        }
 
-    document.getElementById('balance').innerText = user.balance;
-    document.getElementById('today').innerText = user.today_earnings;
-    document.getElementById('wbalance').innerText = user.balance;
-}
+        async function saveWithdrawRequest(amount, method, number) {
+            const { error } = await supabase
+                .from('withdrawals')
+                .insert([{
+                    user_id: currentUser.id,
+                    amount: amount,
+                    method: method,
+                    wallet_number: number
+                }]);
+            
+            return !error;
+        }
 
-// Ads
-function offerwall() {
-    show_10235243('pop').then(() => {
-        addCoins(30);
-        alert("30 Coins Added!");
-    }).catch(() => {});
-}
+        async function loadWithdrawHistory() {
+            const { data } = await supabase
+                .from('withdrawals')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(5);
 
-function adForSpin() {
-    show_10235243().then(() => {
-        extraSpin = true;
-        alert("Extra Spin Unlocked!");
-        document.getElementById('spinBtn').disabled = false;
-    });
-}
+            const container = document.getElementById('wdHistory');
+            container.innerHTML = '';
+            
+            if(data) {
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'task-item';
+                    div.innerHTML = `
+                        <div>
+                            <b>$${item.amount}</b> <small>(${item.method})</small>
+                        </div>
+                        <span class="coin-badge" style="background:${item.status === 'paid' ? 'green':'orange'}; color:white">
+                            ${item.status.toUpperCase()}
+                        </span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        }
 
-function spinNow() {
-    if(!canSpinToday && !extraSpin) return alert("No spins left today!");
-    
-    document.getElementById('spinBtn').disabled = true;
-    const deg = 1800 + Math.floor(Math.random() * 360);
-    document.getElementById('wheel').style.transform = `rotate(${deg}deg)`;
+        // ==========================================
+        // 3. MONETAG ADS INTEGRATION
+        // ==========================================
+        function setupAds() {
+            // 1. In-App Interstitial (Provided Settings)
+            if (typeof show_10235243 === 'function') {
+                show_10235243({
+                    type: 'inApp',
+                    inAppSettings: {
+                        frequency: 2,
+                        capping: 0.1,
+                        interval: 30,
+                        timeout: 5,
+                        everyPage: false
+                    }
+                });
+            }
+        }
 
-    setTimeout(() => {
-        const win = prizes[Math.floor(Math.random() * prizes.length)];
-        alert(`You Won ${win} Coins!`);
-        if(win > 0) addCoins(win, "spin");
-        if(!extraSpin) canSpinToday = false;
-        extraSpin = false;
-        document.getElementById('spinBtn').disabled = false;
-    }, 5000);
-}
+        // Helper: Watch Interstitial (Standard)
+        function showInterstitial() {
+            // Using rewarded interstitial as fallback for high CPM or direct link if available
+            // For this code, we use the provided Rewarded Interstitial wrapper
+            tg.MainButton.showProgress();
+            
+            if (typeof show_10235243 === 'function') {
+                show_10235243().then(() => {
+                    tg.MainButton.hideProgress();
+                    // Just showing ad, no reward
+                }).catch(e => {
+                    tg.MainButton.hideProgress();
+                    console.error(e);
+                });
+            } else {
+                tg.MainButton.hideProgress();
+                alert("Ad not ready yet. Please check connection.");
+            }
+        }
 
-function loadTasks() {
-    const list = document.getElementById('taskList');
-    list.innerHTML = '';
-    tasks.forEach(t => {
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        btn.innerHTML = `\( {t.name} → + \){t.reward} Coins`;
-        btn.onclick = () => {
-            show_10235243().then(() => {
-                addCoins(t.reward);
-                btn.innerHTML = 'Completed';
-                btn.disabled = true;
-            });
-        };
-        list.appendChild(btn);
-    });
-}
+        // Helper: Watch Rewarded Video (For Tasks/Spin)
+        function watchAdAndReward(rewardAmount, type) {
+            tg.MainButton.showProgress();
 
-async function sendWithdraw() {
-    const amt = parseInt(document.getElementById('amount').value);
-    if(!amt || amt < 200 || amt > user.balance) {
-        alert("Minimum 200 Coins & sufficient balance required!");
-        return;
-    }
-    await supabase.from('withdraw_requests').insert({
-        user_id: user.telegram_id,
-        amount: amt,
-        method: document.getElementById('method').value
-    });
-    user.balance -= amt;
-    await supabase.from('users').update({balance: user.balance}).eq('telegram_id', user.telegram_id);
-    alert("Withdraw Request Sent! Will be processed in 24-48 hours.");
-    go('dashboard');
-}
+            if (typeof show_10235243 === 'function') {
+                // Using the Provided "Rewarded Interstitial" code
+                show_10235243().then(() => {
+                    tg.MainButton.hideProgress();
+                    
+                    // Reward User
+                    if(type === 'coin') {
+                        updateBalance(rewardAmount);
+                        Swal.fire('Success', `You earned $${rewardAmount}!`, 'success');
+                    } else if (type === 'spin') {
+                        updateSpins(spinsLeft + 1);
+                        Swal.fire('Success', 'You got 1 Free Spin!', 'success');
+                    }
 
-// Start App
-startApp();
-</script>
+                }).catch(e => {
+                    tg.MainButton.hideProgress();
+                    Swal.fire('Opps', 'Ad failed to load or was closed early.', 'error');
+                });
+            } else {
+                tg.MainButton.hideProgress();
+                alert("Ads are loading... please wait 5 seconds.");
+            }
+        }
+
+        // Helper: Offerwall (Popup)
+        function openOfferwall() {
+            if (typeof show_10235243 === 'function') {
+                // Using Provided "Rewarded Popup" code
+                show_10235243('pop').then(() => {
+                    // Reward random amount for testing
+                    let reward = 0.50;
+                    updateBalance(reward);
+                    Swal.fire('Offer Complete', `You earned $${reward}`, 'success');
+                }).catch(e => {
+                    // Error handling
+                });
+            } else {
+                alert("Offerwall loading...");
+            }
+        }
+
+        // ==========================================
+        // 4. FEATURE LOGIC
+        // ==========================================
+        
+        // --- SPIN ---
+        function spinWheel() {
+            if(spinsLeft <= 0) {
+                Swal.fire({
+                    title: 'No Spins Left!',
+                    text: 'Watch an Ad to get a free spin?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Watch Ad',
+                }).then((result) => {
+                    if (result.isConfirmed) watchAdForSpin();
+                });
+                return;
+            }
+
+            const wheel = document.getElementById('wheelElement');
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = true;
+
+            // Update DB count
+            updateSpins(spinsLeft - 1);
+
+            // Random degree (min 3 rotations)
+            const deg = Math.floor(5000 + Math.random() * 5000); 
+            wheel.style.transform = `rotate(${deg}deg)`;
+
+            // Calculate Reward (Mock logic)
+            setTimeout(() => {
+                const reward = (Math.random() * 0.5).toFixed(2); // Random 0.00 to 0.50
+                updateBalance(parseFloat(reward));
+                Swal.fire('Winner!', `You won $${reward}`, 'success');
+                btn.disabled = false;
+                wheel.style.transform = `rotate(0deg)`; // Reset
+            }, 4500);
+        }
+
+        function watchAdForSpin() {
+            watchAdAndReward(0, 'spin');
+        }
+
+        // --- TASKS ---
+        function renderTasks() {
+            const list = document.getElementById('taskList');
+            const tasks = [
+                { id: 1, title: 'Watch Video Ad', reward: 0.10 },
+                { id: 2, title: 'Visit Sponsor', reward: 0.05 },
+                { id: 3, title: 'Daily Check-in', reward: 0.02 },
+                { id: 4, title: 'Premium Ad', reward: 0.20 },
+            ];
+
+            list.innerHTML = tasks.map(t => `
+                <div class="task-item" onclick="watchAdAndReward(${t.reward}, 'coin')">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fas fa-play-circle" style="color:var(--primary)"></i>
+                        <span>${t.title}</span>
+                    </div>
+                    <span class="coin-badge">+$${t.reward}</span>
+                </div>
+            `).join('');
+        }
+
+        // --- WITHDRAW ---
+        async function submitWithdraw() {
+            const amount = parseFloat(document.getElementById('wdAmount').value);
+            const method = document.getElementById('wdMethod').value;
+            const number = document.getElementById('wdNumber').value;
+
+            if(amount < 5) return Swal.fire('Error', 'Minimum withdraw is $5', 'error');
+            if(amount > userBalance) return Swal.fire('Error', 'Insufficient Balance', 'error');
+            if(!number) return Swal.fire('Error', 'Enter wallet number', 'error');
+
+            const success = await saveWithdrawRequest(amount, method, number);
+            
+            if(success) {
+                updateBalance(-amount); // Deduct balance
+                Swal.fire('Success', 'Withdrawal request submitted!', 'success');
+                loadWithdrawHistory();
+            } else {
+                Swal.fire('Error', 'Server error. Try again.', 'error');
+            }
+        }
+
+        // ==========================================
+        // 5. UI & ROUTING
+        // ==========================================
+        function updateUI() {
+            document.getElementById('userName').innerText = currentUser.first_name;
+            document.getElementById('userId').innerText = currentUser.id;
+            document.getElementById('userAvatar').innerText = currentUser.first_name.charAt(0);
+            
+            document.getElementById('displayBalance').innerText = userBalance.toFixed(2);
+            document.getElementById('walletBalance').innerText = userBalance.toFixed(2);
+            document.getElementById('todayEarnings').innerText = (userBalance * 0.1).toFixed(2); // Mock logic for today
+            document.getElementById('spinsLeft').innerText = spinsLeft;
+        }
+
+        function navTo(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+            
+            // Show target
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+
+            // Logic triggers
+            if(pageId === 'tasks') renderTasks();
+            if(pageId === 'wallet') loadWithdrawHistory();
+
+            // Bottom Nav Active State
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // Simple logic to highlight nav (mapping pageId to index)
+            if(pageId === 'dashboard') document.querySelectorAll('.nav-item')[0].classList.add('active');
+            if(pageId === 'tasks') document.querySelectorAll('.nav-item')[1].classList.add('active');
+            if(pageId === 'wallet') document.querySelectorAll('.nav-item')[2].classList.add('active');
+        }
+
+        // Start
+        window.onload = initApp;
+
+    </script>
 </body>
 </html>
