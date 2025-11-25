@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Giga Earn App</title>
     
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -28,14 +29,14 @@
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* DEBUG BOX (লাল রঙের বক্সটি যা আপনি দেখছিলেন) */
+        /* DEBUG CONSOLE (লাল বক্স) */
         #debug-box { background: #ef4444; color: white; font-size: 11px; padding: 8px; text-align: center; position: fixed; top: 0; width: 100%; z-index: 9999; font-family: monospace; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
 
     <!-- DEBUG CONSOLE -->
-    <div id="debug-box">Checking Referral...</div>
+    <div id="debug-box">Initializing...</div>
 
     <!-- VPN ALERT -->
     <div id="vpn-screen" class="modal-overlay z-[100]">
@@ -240,7 +241,6 @@
             const box = document.getElementById('debug-box');
             box.style.display = 'block';
             box.innerText = msg;
-            // Auto hide after 5 seconds if success
             if(msg.includes("Success")) setTimeout(() => box.style.display = 'none', 3000);
         }
 
@@ -267,14 +267,12 @@
 
             // 4. AUTHENTICATION
             
-            // Capture User
+            // Capture User (Fallback for browser test)
             const tgUser = tg.initDataUnsafe.user || { id: Math.floor(Math.random() * 10000000), first_name: "BrowserTester" };
             
-            // *** POWERFUL REFERRAL CAPTURE ***
-            // Method A: Telegram start_param
+            // *** REFERRAL CAPTURE ***
+            // Check multiple sources for refer code
             let refCode = tg.initDataUnsafe.start_param;
-            
-            // Method B: URL Query Params (backup for web)
             if (!refCode) {
                 const urlParams = new URLSearchParams(window.location.search);
                 refCode = urlParams.get('startapp') || urlParams.get('tgWebAppStartParam');
@@ -310,17 +308,19 @@
         }
 
         async function registerUser(tgUser, deviceId, referrerId) {
-            // 1. Validate Referrer
             let validReferrer = null;
             
-            // Convert to string for safe compare
-            if (referrerId && String(referrerId) !== String(tgUser.id)) {
+            // *** SELF REFERRAL ALLOWED FOR TESTING ***
+            // আমি 'String(referrerId) !== String(tgUser.id)' কন্ডিশনটি কমেন্ট করে দিয়েছি।
+            // এখন আপনি নিজেকেই রেফার করতে পারবেন।
+            
+            if (referrerId) {
                 const { data: refCheck } = await db.from('users').select('id').eq('telegram_id', referrerId).single();
                 if (refCheck) {
-                    validReferrer = referrerId; // Valid!
-                    updateDebug(`Valid Referrer Linked: ${validReferrer}`);
+                    validReferrer = referrerId;
+                    updateDebug(`Valid Referrer Linked: ${validReferrer} (Self Allowed)`);
                 } else {
-                    updateDebug(`Invalid Referrer Code: ${referrerId}`);
+                    updateDebug(`Referrer ID ${referrerId} not found in DB`);
                 }
             }
 
@@ -351,6 +351,8 @@
                         const newBal = parseFloat(refUser.balance) + bonus;
                         await db.from('users').update({ balance: newBal }).eq('telegram_id', validReferrer);
                         console.log("Refer Bonus Sent!");
+                        // Debug Message
+                        updateDebug(`Refer Bonus ${bonus} sent to ID: ${validReferrer}`);
                     }
                 }
             }
@@ -364,7 +366,6 @@
             document.getElementById('wallet-balance').innerText = user.balance.toFixed(2);
             
             const botUser = config.bot_username || "YourBotName";
-            // Correct Link Format for Mini App
             document.getElementById('ref-link').innerText = `https://t.me/${botUser}/app?startapp=${user.telegram_id}`;
         }
 
