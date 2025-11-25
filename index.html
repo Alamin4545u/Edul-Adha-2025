@@ -3,268 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Monetag Earning App</title>
-    
-    <!-- Telegram Web App SDK -->
+    <title>Pro Earning App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Supabase SDK -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-    <!-- Monetag Ad Script (আপনার দেওয়া কোড) -->
-    <script src='//libtl.com/sdk.js' data-zone='10235243' data-sdk='show_10235243'></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #1c1c1e);
+            --bg-color: var(--tg-theme-bg-color, #181818);
+            --card-bg: #242424;
             --text-color: var(--tg-theme-text-color, #ffffff);
-            --button-color: var(--tg-theme-button-color, #3390ec);
-            --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: #2c2c2e;
+            --primary: #5865F2;
+            --success: #00b894;
+            --danger: #d63031;
+            --secondary-text: #b0b3b8;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            padding: 0;
+            padding-bottom: 80px; /* Space for bottom nav */
         }
 
-        .container {
-            width: 100%;
-            max-width: 400px;
+        /* --- Header & Balance --- */
+        .header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom-left-radius: 25px;
+            border-bottom-right-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             text-align: center;
         }
 
-        .balance-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 30px;
-            border-radius: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .balance-title {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-
-        .balance-amount {
-            font-size: 42px;
+        .balance-container h1 {
+            margin: 0;
+            font-size: 36px;
             font-weight: 800;
         }
+        
+        .balance-label { font-size: 14px; opacity: 0.9; }
 
-        .coin-icon {
-            color: #ffd700;
-        }
+        /* --- Sections --- */
+        .section { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .active-section { display: block; }
 
-        .action-btn {
-            background-color: var(--button-color);
-            color: var(--button-text);
-            border: none;
-            padding: 18px;
-            width: 100%;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
+        /* --- Task Cards --- */
+        .task-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 15px;
             margin-bottom: 15px;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .task-info h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .task-reward { color: #ffd700; font-weight: bold; }
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
-        .action-btn:active {
-            transform: scale(0.96);
+        /* --- Withdraw Form --- */
+        .form-group { margin-bottom: 15px; }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            box-sizing: border-box;
         }
+        .btn-full { width: 100%; padding: 15px; font-size: 16px; background: var(--success); color: white; border: none; border-radius: 10px; }
 
-        .action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        /* --- Admin Panel --- */
+        .admin-stat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: #333; padding: 10px; border-radius: 8px; text-align: center; }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid #333;
+            z-index: 1000;
         }
-
-        .loader {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #FFF;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            animation: rotation 1s linear infinite;
-        }
-
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        #status {
-            margin-top: 10px;
+        .nav-item {
+            color: var(--secondary-text);
+            text-align: center;
             font-size: 12px;
-            color: #888;
+            cursor: pointer;
         }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 5px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Loader */
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Balance Section -->
-        <div class="balance-card">
-            <div class="balance-title">YOUR BALANCE</div>
-            <div class="balance-amount"><span class="coin-icon">💎</span> <span id="balance">0</span></div>
+    <!-- Header -->
+    <div class="header">
+        <div class="balance-container">
+            <span class="balance-label">Total Balance</span>
+            <h1><i class="fas fa-coins" style="color:#ffd700;"></i> <span id="userBalance">0</span></h1>
+            <div id="userInfo" style="font-size: 12px; margin-top: 5px;">Loading...</div>
+        </div>
+    </div>
+
+    <!-- 1. TASKS SECTION (Home) -->
+    <div id="home" class="section active-section">
+        <h2 style="font-size: 18px;">Available Tasks</h2>
+        <div id="taskList">
+            <p style="text-align:center; color:#888;">Loading tasks...</p>
+        </div>
+    </div>
+
+    <!-- 2. WITHDRAW SECTION -->
+    <div id="withdraw" class="section">
+        <h2>Withdraw Funds</h2>
+        <div class="task-card">
+            <div>Current Rate</div>
+            <div class="task-reward">1000 Pts = <span id="rateDisplay">...</span></div>
+        </div>
+        
+        <div class="form-group">
+            <label>Payment Method</label>
+            <select id="wdMethod">
+                <option value="bkash">Bkash</option>
+                <option value="nagad">Nagad</option>
+                <option value="binance">Binance (USDT)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Wallet Number / Address</label>
+            <input type="text" id="wdAddress" placeholder="Enter number">
+        </div>
+        <div class="form-group">
+            <label>Points to Withdraw</label>
+            <input type="number" id="wdPoints" placeholder="Min: 5000">
+        </div>
+        <button class="btn-full" onclick="submitWithdraw()">Request Withdraw</button>
+
+        <h3>History</h3>
+        <div id="wdHistory"></div>
+    </div>
+
+    <!-- 3. ADMIN SECTION -->
+    <div id="admin" class="section">
+        <h2>Admin Panel</h2>
+        <div class="admin-stat">
+            <div class="stat-box">
+                <h3 id="totalUsers">0</h3>
+                <small>Users</small>
+            </div>
+            <div class="stat-box">
+                <h3 id="pendingWd">0</h3>
+                <small>Pending WD</small>
+            </div>
         </div>
 
-        <!-- Action Buttons -->
-        <button id="adBtn" class="action-btn" onclick="showRewardedAd()">
-            <span>📺 Watch Ad & Earn (+100)</span>
-            <div class="loader" id="loader"></div>
-        </button>
+        <h3>Create New Task</h3>
+        <div class="form-group">
+            <input type="text" id="newTaskTitle" placeholder="Task Title (e.g. Watch Video 1)">
+        </div>
+        <div class="form-group">
+            <input type="text" id="newTaskZone" placeholder="Monetag Zone ID (e.g. 1234567)">
+        </div>
+        <div class="form-group">
+            <input type="number" id="newTaskReward" placeholder="Reward Points">
+        </div>
+        <button class="btn-start" style="width:100%" onclick="createTask()">Add Task</button>
         
-        <button class="action-btn" style="background-color: var(--secondary-bg); color: var(--text-color);" onclick="alert('Coming soon!')">
-            🚀 Withdraw Funds
-        </button>
+        <h3>Withdraw Requests</h3>
+        <div id="adminWdList"></div>
+    </div>
 
-        <p id="status">Connecting to server...</p>
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home', this)">
+            <i class="fas fa-tasks"></i> Tasks
+        </div>
+        <div class="nav-item" onclick="switchTab('withdraw', this)">
+            <i class="fas fa-wallet"></i> Wallet
+        </div>
+        <div class="nav-item" id="adminNav" style="display:none;" onclick="switchTab('admin', this)">
+            <i class="fas fa-user-shield"></i> Admin
+        </div>
     </div>
 
     <script>
-        // 1. CONFIGURATION
+        // --- CONFIGURATION ---
         const SUPABASE_URL = 'https://nkzdxxuwylkdkncbshjd.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI'; // আপনার দেওয়া Key
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI';
         
-        const REWARD_AMOUNT = 100; // প্রতি অ্যাডে কত পয়েন্ট দিবেন
-
-        // Initialize SDKs
+        // --- INIT ---
         const tg = window.Telegram.WebApp;
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        tg.expand(); // Full screen
+        tg.expand();
 
         let currentUser = null;
-        let currentBalance = 0;
+        let appSettings = {};
 
-        // 2. USER LOGIN & DATA FETCH
-        async function initApp() {
+        // --- STARTUP ---
+        async function init() {
+            // Get Telegram User
             const user = tg.initDataUnsafe.user;
             
-            // টেস্টিংয়ের জন্য যদি টেলিগ্রাম থেকে ওপেন না করেন (Optional)
-            // const user = { id: 123456, first_name: "Test", username: "testuser" }; 
+            // FOR TESTING ONLY (Browser এ টেস্ট করার জন্য নিচের লাইন আন-কমেন্ট করুন)
+            // const user = { id: 12345678, first_name: "Admin", username: "admin", is_bot: false };
 
             if (!user) {
-                document.getElementById('status').innerText = "Please open from Telegram.";
+                document.body.innerHTML = "<h2 style='text-align:center; padding-top:50px;'>Please open from Telegram</h2>";
                 return;
             }
 
-            document.getElementById('status').innerText = `Hello, ${user.first_name}!`;
+            // Fetch User from DB
+            let { data: dbUser, error } = await supabase.from('users').select('*').eq('id', user.id).single();
 
-            // Check if user exists
-            let { data, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-
-            if (!data) {
-                // New User: Create account
-                const { data: newUser, error: insertError } = await supabase
-                    .from('users')
-                    .insert([
-                        { id: user.id, first_name: user.first_name, username: user.username, balance: 0 }
-                    ])
-                    .select()
-                    .single();
-                
-                if (newUser) {
-                    currentUser = newUser;
-                    updateUI(newUser.balance);
-                }
+            if (!dbUser) {
+                // Register New User
+                const { data: newUser } = await supabase.from('users').insert([{
+                    id: user.id,
+                    first_name: user.first_name,
+                    username: user.username
+                }]).select().single();
+                currentUser = newUser;
             } else {
-                // Existing User
-                currentUser = data;
-                updateUI(data.balance);
+                currentUser = dbUser;
             }
+
+            // Update UI
+            document.getElementById('userInfo').innerText = `@${currentUser.username || 'User'}`;
+            document.getElementById('userBalance').innerText = currentUser.balance;
+
+            // Admin Check
+            if (currentUser.is_admin) {
+                document.getElementById('adminNav').style.display = 'block';
+                loadAdminStats();
+            }
+
+            loadSettings();
+            loadTasks();
+            loadWithdrawHistory();
         }
 
-        function updateUI(balance) {
-            currentBalance = balance;
-            document.getElementById('balance').innerText = balance;
-            document.getElementById('status').innerText = "Ready to earn!";
+        // --- NAVIGATION ---
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active-section'));
+            document.getElementById(tabId).classList.add('active-section');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
         }
 
-        // 3. MONETAG AD LOGIC (REWARDED)
-        function showRewardedAd() {
-            const btn = document.getElementById('adBtn');
-            const loader = document.getElementById('loader');
+        // --- TASK & AD LOGIC ---
+        async function loadTasks() {
+            const list = document.getElementById('taskList');
+            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true).order('id');
             
-            // বাটন ডিসেবল করা যাতে বারবার ক্লিক না পড়ে
-            btn.disabled = true;
-            loader.style.display = 'block';
-            document.getElementById('status').innerText = "Loading Ad...";
-
-            // আপনার দেওয়া Monetag ফাংশন কল করা হচ্ছে
-            if (typeof show_10235243 === 'function') {
-                show_10235243().then(() => {
-                    // অ্যাড সফলভাবে দেখার পর
-                    document.getElementById('status').innerText = "Ad Watched! Adding reward...";
-                    addReward();
-                }).catch(e => {
-                    // যদি অ্যাড লোড না হয় বা এরর দেয়
-                    console.error(e);
-                    alert("Ad failed to load or closed too early. Try again with VPN if allowed.");
-                    resetBtn();
+            list.innerHTML = '';
+            if(tasks && tasks.length > 0) {
+                tasks.forEach(task => {
+                    list.innerHTML += `
+                        <div class="task-card">
+                            <div class="task-info">
+                                <h3>${task.title}</h3>
+                                <div class="task-reward">+${task.reward} Coins</div>
+                            </div>
+                            <button class="btn-start" onclick="startTask(${task.id}, '${task.zone_id}', ${task.reward})">
+                                Start <i class="fas fa-play"></i>
+                            </button>
+                        </div>
+                    `;
                 });
             } else {
-                alert("Ad script not loaded yet. Check internet connection.");
-                resetBtn();
+                list.innerHTML = '<p style="text-align:center;">No tasks available.</p>';
             }
         }
 
-        // 4. ADD REWARD TO DATABASE
-        async function addReward() {
-            const newBalance = currentBalance + REWARD_AMOUNT;
+        function startTask(taskId, zoneId, reward) {
+            // Dynamic Script Injection for Multiple Zones
+            // Monetag usually uses a specific function name like show_ZONEID
+            
+            const scriptUrl = '//libtl.com/sdk.js'; 
+            const sdkName = `show_${zoneId}`;
 
-            const { data, error } = await supabase
-                .from('users')
-                .update({ balance: newBalance })
-                .eq('id', currentUser.id)
-                .select()
-                .single();
+            // Remove old script if exists to prevent conflict
+            const oldScript = document.getElementById('ad-script');
+            if(oldScript) oldScript.remove();
 
-            if (error) {
-                alert("Network Error: Could not save balance.");
-            } else {
-                updateUI(newBalance);
-                // Success Vibration (Haptic Feedback)
-                tg.HapticFeedback.notificationOccurred('success');
-                alert(`Congratulations! You earned ${REWARD_AMOUNT} coins.`);
+            // Inject new script
+            const script = document.createElement('script');
+            script.src = scriptUrl;
+            script.id = 'ad-script';
+            script.dataset.zone = zoneId;
+            script.dataset.sdk = sdkName;
+
+            tg.MainButton.showProgress(); // Show loading in Telegram
+
+            script.onload = () => {
+                tg.MainButton.hideProgress();
+                // Call the ad function dynamically
+                if (window[sdkName]) {
+                    window[sdkName]().then(() => {
+                        completeTask(reward);
+                    });
+                } else {
+                    alert("Ad script loaded but function not found. VPN might be interfering.");
+                }
+            };
+
+            script.onerror = () => {
+                tg.MainButton.hideProgress();
+                alert("Failed to load Ad. \nTip: Enable VPN (USA/UK) or try a different server.");
+            };
+
+            document.head.appendChild(script);
+        }
+
+        async function completeTask(reward) {
+            const newBal = currentUser.balance + reward;
+            const newWatched = (currentUser.ads_watched || 0) + 1;
+
+            // Optimistic UI Update
+            document.getElementById('userBalance').innerText = newBal;
+            currentUser.balance = newBal;
+
+            await supabase.from('users').update({ 
+                balance: newBal,
+                ads_watched: newWatched
+            }).eq('id', currentUser.id);
+
+            tg.HapticFeedback.notificationOccurred('success');
+            alert(`Success! You earned ${reward} coins.`);
+        }
+
+        // --- WITHDRAW LOGIC ---
+        async function loadSettings() {
+            const { data } = await supabase.from('app_settings').select('*');
+            if(data) {
+                data.forEach(item => appSettings[item.key] = item.value);
+                const rate = appSettings['conversion_rate'] || '0';
+                const symbol = appSettings['currency_symbol'] || '$';
+                document.getElementById('rateDisplay').innerText = `${symbol}${rate}`;
             }
-            resetBtn();
         }
 
-        function resetBtn() {
-            const btn = document.getElementById('adBtn');
-            const loader = document.getElementById('loader');
-            btn.disabled = false;
-            loader.style.display = 'none';
+        async function submitWithdraw() {
+            const amount = parseInt(document.getElementById('wdPoints').value);
+            const address = document.getElementById('wdAddress').value;
+            const method = document.getElementById('wdMethod').value;
+            const minWd = parseInt(appSettings['min_withdraw'] || 5000);
+
+            if(amount < minWd) return alert(`Minimum withdraw is ${minWd} points.`);
+            if(amount > currentUser.balance) return alert("Insufficient balance!");
+            if(!address) return alert("Enter wallet address.");
+
+            // Calculate Money
+            const rate = parseFloat(appSettings['conversion_rate']);
+            const money = ((amount / 1000) * rate).toFixed(2);
+            const symbol = appSettings['currency_symbol'];
+
+            // Deduct Balance First
+            const { error: updateErr } = await supabase.from('users').update({
+                balance: currentUser.balance - amount
+            }).eq('id', currentUser.id);
+
+            if(updateErr) return alert("Error updating balance.");
+
+            // Create Request
+            const { error: insertErr } = await supabase.from('withdrawals').insert([{
+                user_id: currentUser.id,
+                amount_points: amount,
+                amount_money: `${symbol}${money}`,
+                method: method,
+                wallet_address: address
+            }]);
+
+            if(!insertErr) {
+                currentUser.balance -= amount;
+                document.getElementById('userBalance').innerText = currentUser.balance;
+                alert("Withdraw request submitted!");
+                loadWithdrawHistory();
+            }
         }
 
-        // Start the App
-        initApp();
+        async function loadWithdrawHistory() {
+            const { data } = await supabase.from('withdrawals')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            const container = document.getElementById('wdHistory');
+            container.innerHTML = '';
+            if(data) {
+                data.forEach(wd => {
+                    let color = wd.status === 'pending' ? 'orange' : (wd.status === 'paid' ? 'green' : 'red');
+                    container.innerHTML += `
+                        <div style="background:#333; padding:10px; margin-bottom:5px; border-radius:5px; font-size:12px; display:flex; justify-content:space-between;">
+                            <span>${wd.amount_money} (${wd.method})</span>
+                            <span style="color:${color}">${wd.status.toUpperCase()}</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // --- ADMIN PANEL LOGIC ---
+        async function loadAdminStats() {
+            // Count Users
+            const { count: userCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+            document.getElementById('totalUsers').innerText = userCount || 0;
+
+            // Count Pending WD
+            const { count: wdCount } = await supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+            document.getElementById('pendingWd').innerText = wdCount || 0;
+
+            loadAdminWdList();
+        }
+
+        async function createTask() {
+            const title = document.getElementById('newTaskTitle').value;
+            const zone = document.getElementById('newTaskZone').value;
+            const reward = document.getElementById('newTaskReward').value;
+
+            if(!title || !zone || !reward) return alert("Fill all fields");
+
+            await supabase.from('tasks').insert([{
+                title: title,
+                zone_id: zone,
+                reward: parseInt(reward)
+            }]);
+
+            alert("Task Created!");
+            loadTasks(); // Refresh list
+        }
+
+        async function loadAdminWdList() {
+            const { data } = await supabase.from('withdrawals')
+                .select('*, users(username)')
+                .eq('status', 'pending')
+                .order('created_at');
+
+            const list = document.getElementById('adminWdList');
+            list.innerHTML = '';
+
+            if(data) {
+                data.forEach(wd => {
+                    list.innerHTML += `
+                        <div style="background:#444; padding:10px; margin-bottom:10px; border-radius:5px;">
+                            <div>User: @${wd.users?.username || 'Unknown'}</div>
+                            <div>Amount: ${wd.amount_money} | To: ${wd.wallet_address} (${wd.method})</div>
+                            <div style="margin-top:5px;">
+                                <button onclick="processWd(${wd.id}, 'paid')" style="background:green; color:white; border:none; padding:5px;">Pay</button>
+                                <button onclick="processWd(${wd.id}, 'rejected')" style="background:red; color:white; border:none; padding:5px;">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        async function processWd(id, status) {
+            await supabase.from('withdrawals').update({ status: status }).eq('id', id);
+            loadAdminStats(); // Refresh
+        }
+
+        // Run
+        init();
 
     </script>
 </body>
