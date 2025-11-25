@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Giga Earn App</title>
     
-    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -29,14 +28,14 @@
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* DEBUG CONSOLE STYLE */
-        #debug-box { background: #ef4444; color: white; font-size: 10px; padding: 5px; text-align: center; position: fixed; top: 0; width: 100%; z-index: 9999; font-family: monospace; }
+        /* DEBUG BOX (লাল রঙের বক্সটি যা আপনি দেখছিলেন) */
+        #debug-box { background: #ef4444; color: white; font-size: 11px; padding: 8px; text-align: center; position: fixed; top: 0; width: 100%; z-index: 9999; font-family: monospace; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
 
-    <!-- DEBUG CONSOLE (REMOVE LATER) -->
-    <div id="debug-box">Initializing...</div>
+    <!-- DEBUG CONSOLE -->
+    <div id="debug-box">Checking Referral...</div>
 
     <!-- VPN ALERT -->
     <div id="vpn-screen" class="modal-overlay z-[100]">
@@ -55,7 +54,7 @@
     </div>
 
     <!-- HEADER -->
-    <div class="fixed top-6 w-full z-40 bg-[#0f172a]/95 border-b border-slate-800 px-4 py-3 flex justify-between items-center shadow-lg">
+    <div class="fixed top-0 w-full z-40 bg-[#0f172a]/95 border-b border-slate-800 px-4 py-3 flex justify-between items-center shadow-lg">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border border-slate-500 overflow-hidden">
                 <img id="user-photo" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-full h-full object-cover">
@@ -70,7 +69,7 @@
             <p class="font-bold text-lg text-green-400 leading-none">৳<span id="header-balance">0.00</span></p>
         </div>
     </div>
-    <div class="h-24"></div>
+    <div class="h-20"></div>
 
     <!-- 1. HOME -->
     <div id="home" class="page-section active-page px-4">
@@ -238,11 +237,15 @@
         let spinRewardTemp = 0;
 
         function updateDebug(msg) {
-            document.getElementById('debug-box').innerText = msg;
+            const box = document.getElementById('debug-box');
+            box.style.display = 'block';
+            box.innerText = msg;
+            // Auto hide after 5 seconds if success
+            if(msg.includes("Success")) setTimeout(() => box.style.display = 'none', 3000);
         }
 
         async function initApp() {
-            updateDebug("App Starting...");
+            updateDebug("App Initializing...");
             
             // 1. In-App Interstitial (Auto)
             if (typeof window[AD_SDK_NAME] === 'function') {
@@ -264,26 +267,34 @@
 
             // 4. AUTHENTICATION
             
-            // *** CAPTURE TELEGRAM DATA ***
-            // Test ID Fallback (Delete '|| { ... }' for production)
+            // Capture User
             const tgUser = tg.initDataUnsafe.user || { id: Math.floor(Math.random() * 10000000), first_name: "BrowserTester" };
             
-            // *** CRITICAL: REFER PARAM CAPTURE ***
-            const startParam = tg.initDataUnsafe.start_param;
-            updateDebug(`My ID: ${tgUser.id} | Ref Code: ${startParam || 'None'}`);
+            // *** POWERFUL REFERRAL CAPTURE ***
+            // Method A: Telegram start_param
+            let refCode = tg.initDataUnsafe.start_param;
+            
+            // Method B: URL Query Params (backup for web)
+            if (!refCode) {
+                const urlParams = new URLSearchParams(window.location.search);
+                refCode = urlParams.get('startapp') || urlParams.get('tgWebAppStartParam');
+            }
+
+            updateDebug(`My ID: ${tgUser.id} | Found Ref: ${refCode || 'NULL'}`);
 
             let deviceId = localStorage.getItem('device_id');
             if(!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem('device_id', deviceId); }
 
             // Check Existing User
-            // Using String for safer comparison in JS
             const { data: exist } = await db.from('users').select('*').eq('telegram_id', tgUser.id).single();
 
             if (!exist) {
-                updateDebug(`Registering new user... Ref: ${startParam}`);
-                await registerUser(tgUser, deviceId, startParam);
+                // New User
+                updateDebug(`Registering New User... Ref: ${refCode}`);
+                await registerUser(tgUser, deviceId, refCode);
             } else {
-                updateDebug("Old User Logged In");
+                // Old User
+                updateDebug("Login Successful.");
                 user = exist;
                 if(user.is_banned) {
                     document.body.innerHTML = '<div class="flex h-screen items-center justify-center text-red-500 font-bold">ACCOUNT SUSPENDED</div>';
@@ -302,15 +313,14 @@
             // 1. Validate Referrer
             let validReferrer = null;
             
-            // Convert both to string for comparison to avoid JS large number issues
+            // Convert to string for safe compare
             if (referrerId && String(referrerId) !== String(tgUser.id)) {
-                // Check if referrer exists in DB
                 const { data: refCheck } = await db.from('users').select('id').eq('telegram_id', referrerId).single();
                 if (refCheck) {
-                    validReferrer = referrerId; // Keep as received (BigInt/String)
-                    updateDebug(`Valid Referrer Found: ${validReferrer}`);
+                    validReferrer = referrerId; // Valid!
+                    updateDebug(`Valid Referrer Linked: ${validReferrer}`);
                 } else {
-                    updateDebug("Referrer ID not found in DB");
+                    updateDebug(`Invalid Referrer Code: ${referrerId}`);
                 }
             }
 
@@ -319,21 +329,20 @@
                 telegram_id: tgUser.id,
                 first_name: tgUser.first_name,
                 device_id: deviceId,
-                referrer_id: validReferrer, // Supabase handles BigInt
+                referrer_id: validReferrer, 
                 is_fake_account: false,
                 balance: 0.00
             }]).select().single();
 
             if (error) {
-                console.error("Reg Error:", error);
-                updateDebug("Reg Error: " + error.message);
+                updateDebug("Reg Failed: " + error.message);
                 return;
             }
 
             user = newUser;
             updateUI();
 
-            // 3. Give Bonus to Referrer
+            // 3. Give Bonus to REFERRER
             if (validReferrer) {
                 const bonus = parseFloat(config.refer_bonus_fixed || 0);
                 if (bonus > 0) {
@@ -341,7 +350,7 @@
                     if (refUser) {
                         const newBal = parseFloat(refUser.balance) + bonus;
                         await db.from('users').update({ balance: newBal }).eq('telegram_id', validReferrer);
-                        updateDebug(`Bonus ${bonus} sent to ${validReferrer}`);
+                        console.log("Refer Bonus Sent!");
                     }
                 }
             }
@@ -355,11 +364,11 @@
             document.getElementById('wallet-balance').innerText = user.balance.toFixed(2);
             
             const botUser = config.bot_username || "YourBotName";
-            // Use direct startapp link for better support
+            // Correct Link Format for Mini App
             document.getElementById('ref-link').innerText = `https://t.me/${botUser}/app?startapp=${user.telegram_id}`;
         }
 
-        // REST OF THE LOGIC (Tasks, Wallet, Ads)
+        // REST OF THE LOGIC
         async function checkVPN() {
             if(config.vpn_required !== 'true') return true;
             try {
