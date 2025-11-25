@@ -3,188 +3,592 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Earning App</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <title>Earn Rewards App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.monetag.com/sdk/monetag-sdk-latest.js"></script>
     <style>
-        body { background-color: #181818; color: #fff; font-family: sans-serif; padding: 20px; text-align: center; }
-        .card { background: #242424; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        .btn-primary { background: #5865F2; color: white; }
-        .btn-success { background: #00b894; color: white; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 10px; background: #333; border: 1px solid #555; color: white; border-radius: 5px; box-sizing: border-box;}
-        .hidden { display: none; }
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+        /* Glassmorphism Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        /* Premium Buttons */
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        /* Pages */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        /* Profile */
+        .profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .profile-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        /* Grid Menu */
+        .grid-menu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        /* Spin Wheel */
+        .wheel-container {
+            position: relative;
+            margin: 20px auto;
+            width: 300px;
+            height: 300px;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff6384 0deg 45deg, #ffcd56 45deg 90deg,
+                #4bc0c0 90deg 135deg, #9966ff 135deg 180deg,
+                #ff6384 180deg 225deg, #ffcd56 225deg 270deg,
+                #4bc0c0 270deg 315deg, #9966ff 315deg 360deg
+            );
+            transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .arrow {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid #ff0;
+            z-index: 10;
+        }
+        /* Loading Animation */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* List */
+        ul {
+            list-style: none;
+        }
+        li {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+        /* Form */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        input, select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        /* Smooth Transitions */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
-
-    <!-- Header -->
-    <div class="card">
-        <h3>Balance: <span id="balance">0</span> Coins</h3>
-        <small id="username">Loading...</small>
+    <div id="loading">
+        <div class="loader"></div>
     </div>
-
-    <!-- Menu -->
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <button class="btn btn-primary" onclick="showSection('tasks')">Tasks</button>
-        <button class="btn btn-success" onclick="showSection('withdraw')">Withdraw</button>
-    </div>
-
-    <!-- Tasks Section -->
-    <div id="tasks" class="section">
-        <h3>Available Tasks</h3>
-        <div id="taskList">Loading...</div>
-    </div>
-
-    <!-- Withdraw Section -->
-    <div id="withdraw" class="section hidden">
-        <h3>Request Payment</h3>
-        <div class="card">
-            <p>Rate: 1000 Coins = <span id="rate">...</span></p>
-            <input type="number" id="wdAmount" placeholder="Amount (Points)">
-            <select id="wdMethod">
-                <option value="bkash">Bkash</option>
-                <option value="nagad">Nagad</option>
-                <option value="binance">Binance</option>
-            </select>
-            <input type="text" id="wdAddress" placeholder="Wallet Number">
-            <button class="btn btn-success" onclick="requestWithdraw()">Submit Request</button>
+    <div class="container">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <div class="profile">
+                <img id="profile-photo" class="profile-img" src="" alt="Profile">
+                <div>
+                    <h2 id="user-name"></h2>
+                    <p>ID: <span id="user-id"></span></p>
+                </div>
+            </div>
+            <div class="card">
+                <p>Today's Earnings: <span id="today-earnings">0</span> coins</p>
+                <p>Total Balance: <span id="total-balance">0</span> coins</p>
+                <p>Referral Count: <span id="referral-count">0</span></p>
+            </div>
+            <div class="grid-menu">
+                <button class="btn" onclick="showPage('spin')"><i class="fas fa-sync"></i> Spin</button>
+                <button class="btn" onclick="showPage('offerwall')"><i class="fas fa-gift"></i> Offerwall</button>
+                <button class="btn" onclick="showPage('tasks')"><i class="fas fa-tasks"></i> Tasks</button>
+                <button class="btn" onclick="showPage('wallet')"><i class="fas fa-wallet"></i> Wallet</button>
+                <button class="btn" onclick="showPage('withdraw')"><i class="fas fa-money-bill-wave"></i> Withdraw</button>
+                <button class="btn" onclick="showPage('profile')"><i class="fas fa-user"></i> Profile</button>
+            </div>
         </div>
-        <h4>History</h4>
-        <div id="wdHistory"></div>
+
+        <!-- Spin Page -->
+        <div id="spin" class="page">
+            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="wheel-container">
+                <div class="arrow"></div>
+                <div id="wheel" class="wheel"></div>
+            </div>
+            <p id="spin-message">You have 1 free spin daily!</p>
+            <button id="spin-btn" class="btn" onclick="doSpin()"><i class="fas fa-sync"></i> Spin Now</button>
+            <button id="extra-spin-btn" class="btn" onclick="watchAdForExtraSpin()"><i class="fas fa-video"></i> Watch Ad for Extra Spin</button>
+        </div>
+
+        <!-- Offerwall Page -->
+        <div id="offerwall" class="page">
+            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="card">
+                <h2>Offerwall</h2>
+                <p>Complete offers to earn more coins!</p>
+                <button class="btn" onclick="showRewardedPopup()"><i class="fas fa-gift"></i> Open Offerwall</button>
+            </div>
+        </div>
+
+        <!-- Tasks Page -->
+        <div id="tasks" class="page">
+            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="card">
+                <h2>Daily Tasks</h2>
+                <ul id="tasks-list"></ul>
+            </div>
+        </div>
+
+        <!-- Wallet Page -->
+        <div id="wallet" class="page">
+            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="card">
+                <h2>Wallet</h2>
+                <p>Total Balance: <span id="wallet-balance">0</span> coins</p>
+                <p>Today's Income: <span id="wallet-today">0</span> coins</p>
+                <h3>History</h3>
+                <ul id="history-list"></ul>
+            </div>
+            <button class="btn" onclick="showPage('withdraw')"><i class="fas fa-money-bill-wave"></i> Withdraw</button>
+        </div>
+
+        <!-- Withdraw Page -->
+        <div id="withdraw" class="page">
+            <button class="btn" onclick="showPage('wallet')"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="card">
+                <h2>Withdraw</h2>
+                <form id="withdraw-form">
+                    <input type="number" id="withdraw-amount" placeholder="Amount" required min="1">
+                    <select id="withdraw-method" required>
+                        <option value="">Select Method</option>
+                        <option value="Bkash">Bkash</option>
+                        <option value="Nagad">Nagad</option>
+                        <option value="Rocket">Rocket</option>
+                    </select>
+                    <button type="submit" class="btn"><i class="fas fa-check"></i> Submit Request</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile" class="page">
+            <button class="btn" onclick="showPage('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
+            <div class="card">
+                <h2>Profile</h2>
+                <img id="profile-photo-large" class="profile-img" style="width:100px; height:100px;" src="" alt="Profile">
+                <p>Name: <span id="profile-name"></span></p>
+                <p>ID: <span id="profile-id"></span></p>
+                <p>Balance: <span id="profile-balance">0</span> coins</p>
+                <p>Referrals: <span id="profile-referrals">0</span></p>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Supabase Placeholders (using provided values)
         const SUPABASE_URL = 'https://nkzdxxuwylkdkncbshjd.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI';
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI';
 
-        let user = tg.initDataUnsafe.user;
-        let dbUser = null;
-        let settings = {};
+        // Initialize Supabase
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // For Testing in Browser (Uncomment to test without Telegram)
-        // user = { id: 12345678, first_name: "Test", username: "User" };
+        // Telegram WebApp
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) tg.ready();
+        let tgUser = tg ? tg.initDataUnsafe.user : { id: 123456, first_name: 'Test User', photo_url: '' };
 
-        async function init() {
-            if (!user) return document.body.innerHTML = "<h1>Please open in Telegram</h1>";
-            
-            // 1. Login/Register
-            let { data } = await supabase.from('users').select('*').eq('id', user.id).single();
-            if (!data) {
-                const { data: newUser } = await supabase.from('users').insert([{ id: user.id, first_name: user.first_name, username: user.username }]).select().single();
-                dbUser = newUser;
-            } else {
-                dbUser = data;
-            }
+        // Current User Data
+        let currentUser = null;
 
-            if(dbUser.is_banned) return document.body.innerHTML = "<h1 style='color:red'>You are BANNED</h1>";
+        // Prizes for Spin
+        const prizes = [10, 20, 5, 50, 1, 100, 0, 25];
+        const sectors = prizes.length;
 
-            // 2. Load Data
-            document.getElementById('username').innerText = "@" + (dbUser.username || 'user');
-            document.getElementById('balance').innerText = dbUser.balance;
-            
-            loadSettings();
-            loadTasks();
-            loadHistory();
+        // Tasks
+        const tasks = [
+            { id: 1, name: 'Task 1: Watch Video', reward: 10 },
+            { id: 2, name: 'Task 2: Complete Survey', reward: 15 },
+            { id: 3, name: 'Task 3: Play Game', reward: 20 },
+            { id: 4, name: 'Task 4: Share App', reward: 25 },
+            { id: 5, name: 'Task 5: Rate Us', reward: 30 }
+        ];
+
+        // Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if (pageId === 'tasks') loadTasks();
+            if (pageId === 'wallet') loadWallet();
+            if (pageId === 'profile') loadProfile();
+            if (pageId === 'spin') updateSpinButtons();
         }
 
-        // --- TASKS & ADS ---
-        async function loadTasks() {
-            const { data: tasks } = await supabase.from('tasks').select('*').eq('is_active', true);
-            const list = document.getElementById('taskList');
-            list.innerHTML = '';
-            
-            tasks.forEach(task => {
-                const btn = document.createElement('button');
-                btn.className = 'btn btn-primary';
-                btn.innerHTML = `${task.title} (+${task.reward})`;
-                btn.onclick = () => playAd(task.zone_id, task.reward);
-                list.appendChild(btn);
+        // Supabase Functions
+        async function createUserIfNotExists() {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('telegram_id', tgUser.id);
+
+            if (error) console.error(error);
+            if (data.length === 0) {
+                await supabase.from('users').insert({
+                    telegram_id: tgUser.id,
+                    name: tgUser.first_name,
+                    photo_url: tgUser.photo_url || '',
+                    balance: 0,
+                    today_earnings: 0,
+                    referral_count: 0,
+                    last_spin: null,
+                    ad_watches_today: 0,
+                    last_ad_day: null,
+                    last_login: null,
+                    completed_tasks: ''
+                });
+            }
+        }
+
+        async function getUserData() {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('telegram_id', tgUser.id)
+                .single();
+
+            if (error) console.error(error);
+            return data;
+        }
+
+        async function updateUserData(updates) {
+            const { error } = await supabase
+                .from('users')
+                .update(updates)
+                .eq('telegram_id', tgUser.id);
+
+            if (error) console.error(error);
+        }
+
+        async function saveWithdrawRequest(amount, method) {
+            const { error } = await supabase.from('withdraw_requests').insert({
+                user_id: tgUser.id,
+                amount,
+                method,
+                status: 'pending',
+                date: new Date().toISOString()
+            });
+            if (error) console.error(error);
+        }
+
+        async function addTransaction(amount, type) {
+            const { error } = await supabase.from('transactions').insert({
+                user_id: tgUser.id,
+                amount,
+                type,
+                date: new Date().toISOString()
+            });
+            if (error) console.error(error);
+        }
+
+        // Reward User
+        async function rewardUser(amount, fromAd = true) {
+            if (fromAd && currentUser.ad_watches_today >= 10) {
+                alert('Daily ad limit reached!');
+                return false;
+            }
+            currentUser.balance += amount;
+            currentUser.today_earnings += amount;
+            if (fromAd) currentUser.ad_watches_today += 1;
+            await updateUserData({
+                balance: currentUser.balance,
+                today_earnings: currentUser.today_earnings,
+                ad_watches_today: currentUser.ad_watches_today
+            });
+            await addTransaction(amount, 'earn');
+            updateDashboard();
+            return true;
+        }
+
+        // Ad Functions
+        function showInterstitial() {
+            show_10235243({
+                type: 'inApp',
+                inAppSettings: {
+                    frequency: 2,
+                    capping: 0.1,
+                    interval: 30,
+                    timeout: 5,
+                    everyPage: false
+                }
             });
         }
 
-        function playAd(zoneId, reward) {
-            // Remove old script
-            const old = document.getElementById('ad-script');
-            if(old) old.remove();
+        function showRewardedPopup() {
+            show_10235243('pop').then(async () => {
+                await rewardUser(20);
+            }).catch(e => {
+                console.error(e);
+            });
+        }
 
-            // Inject new script
-            const script = document.createElement('script');
-            script.src = '//libtl.com/sdk.js';
-            script.id = 'ad-script';
-            script.dataset.zone = zoneId;
-            script.dataset.sdk = `show_${zoneId}`;
-            
-            document.body.appendChild(script);
+        function showRewardedAd(callback = null) {
+            show_10235243().then(async () => {
+                await rewardUser(10);
+                if (callback) callback();
+            }).catch(e => {
+                console.error(e);
+            });
+        }
 
-            script.onload = () => {
-                const sdkFunc = window[`show_${zoneId}`];
-                if (typeof sdkFunc === 'function') {
-                    sdkFunc().then(() => {
-                        giveReward(reward);
-                    });
+        // Spin Functions
+        let isSpinning = false;
+        async function doSpin() {
+            if (isSpinning) return;
+            const today = new Date().toISOString().split('T')[0];
+            let canSpin = false;
+            if (currentUser.last_spin !== today) {
+                canSpin = true;
+                currentUser.last_spin = today;
+                await updateUserData({ last_spin: today });
+            } else if (extraSpinAllowed) {
+                canSpin = true;
+                extraSpinAllowed = false;
+            }
+            if (!canSpin) {
+                alert('No spins left today!');
+                return;
+            }
+            isSpinning = true;
+            const wheel = document.getElementById('wheel');
+            const randomIndex = Math.floor(Math.random() * prizes.length);
+            const prize = prizes[randomIndex];
+            const degrees = 360 * 5 + (360 / sectors * (sectors - randomIndex - 0.5));
+            wheel.style.transform = `rotate(${degrees}deg)`;
+            setTimeout(async () => {
+                alert(`You won ${prize} coins!`);
+                if (prize > 0) await rewardUser(prize, false);
+                wheel.style.transform = 'rotate(0deg)';
+                isSpinning = false;
+                updateSpinButtons();
+            }, 4500);
+        }
+
+        let extraSpinAllowed = false;
+        function watchAdForExtraSpin() {
+            showRewardedAd(() => {
+                extraSpinAllowed = true;
+                updateSpinButtons();
+            });
+        }
+
+        function updateSpinButtons() {
+            const today = new Date().toISOString().split('T')[0];
+            const freeAvailable = currentUser.last_spin !== today;
+            document.getElementById('spin-message').textContent = freeAvailable ? 'You have 1 free spin!' : 'No free spins left.';
+            document.getElementById('spin-btn').disabled = !freeAvailable && !extraSpinAllowed;
+            document.getElementById('extra-spin-btn').disabled = !freeAvailable && extraSpinAllowed;  // Hide if free available?
+        }
+
+        // Tasks
+        async function loadTasks() {
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = '';
+            const completed = currentUser.completed_tasks.split(',').filter(Boolean).map(Number);
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = `\( {task.name} - \){task.reward} coins`;
+                if (!completed.includes(task.id)) {
+                    const btn = document.createElement('button');
+                    btn.classList.add('btn');
+                    btn.innerHTML = '<i class="fas fa-video"></i> Watch Ad';
+                    btn.onclick = () => {
+                        showRewardedAd(async () => {
+                            completed.push(task.id);
+                            currentUser.completed_tasks = completed.join(',');
+                            await updateUserData({ completed_tasks: currentUser.completed_tasks });
+                            await rewardUser(task.reward);
+                            loadTasks();
+                        });
+                    };
+                    li.appendChild(btn);
                 } else {
-                    alert("Ad failed. Use VPN (USA/UK).");
+                    li.innerHTML += ' - Completed';
                 }
-            };
-            script.onerror = () => alert("Network Error. Check VPN.");
+                list.appendChild(li);
+            });
         }
 
-        async function giveReward(amount) {
-            const newBal = dbUser.balance + amount;
-            await supabase.from('users').update({ balance: newBal, ads_watched: dbUser.ads_watched + 1 }).eq('id', user.id);
-            dbUser.balance = newBal;
-            document.getElementById('balance').innerText = newBal;
-            alert(`You earned ${amount} coins!`);
+        // Wallet
+        async function loadWallet() {
+            document.getElementById('wallet-balance').textContent = currentUser.balance;
+            document.getElementById('wallet-today').textContent = currentUser.today_earnings;
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            const { data, error } = await supabase.from('transactions').select('*').eq('user_id', tgUser.id).order('date', { ascending: false });
+            if (error) console.error(error);
+            data.forEach(tx => {
+                const li = document.createElement('li');
+                li.textContent = `\( {tx.date.split('T')[0]} - \){tx.type.toUpperCase()}: ${tx.amount} coins`;
+                list.appendChild(li);
+            });
         }
 
-        // --- WITHDRAW ---
-        async function loadSettings() {
-            const { data } = await supabase.from('app_settings').select('*');
-            data.forEach(s => settings[s.key] = s.value);
-            document.getElementById('rate').innerText = `${settings.currency_symbol}${settings.conversion_rate}`;
+        // Profile
+        function loadProfile() {
+            document.getElementById('profile-photo-large').src = currentUser.photo_url || '';
+            document.getElementById('profile-name').textContent = currentUser.name;
+            document.getElementById('profile-id').textContent = currentUser.telegram_id;
+            document.getElementById('profile-balance').textContent = currentUser.balance;
+            document.getElementById('profile-referrals').textContent = currentUser.referral_count;
         }
 
-        async function requestWithdraw() {
-            const amount = parseInt(document.getElementById('wdAmount').value);
-            const method = document.getElementById('wdMethod').value;
-            const address = document.getElementById('wdAddress').value;
-            const minWd = parseInt(settings.min_withdraw);
-
-            if (amount < minWd) return alert(`Minimum ${minWd} points required.`);
-            if (amount > dbUser.balance) return alert("Insufficient balance.");
-            if (!address) return alert("Enter wallet address.");
-
-            const money = ((amount / 1000) * parseFloat(settings.conversion_rate)).toFixed(2);
-            
-            // Deduct & Insert
-            await supabase.from('users').update({ balance: dbUser.balance - amount }).eq('id', user.id);
-            await supabase.from('withdrawals').insert([{
-                user_id: user.id, amount_points: amount, amount_money: `${settings.currency_symbol}${money}`, method, wallet_address: address
-            }]);
-
-            dbUser.balance -= amount;
-            document.getElementById('balance').innerText = dbUser.balance;
-            alert("Withdrawal submitted!");
-            loadHistory();
+        // Dashboard Update
+        function updateDashboard() {
+            document.getElementById('profile-photo').src = currentUser.photo_url || '';
+            document.getElementById('user-name').textContent = currentUser.name;
+            document.getElementById('user-id').textContent = currentUser.telegram_id;
+            document.getElementById('today-earnings').textContent = currentUser.today_earnings;
+            document.getElementById('total-balance').textContent = currentUser.balance;
+            document.getElementById('referral-count').textContent = currentUser.referral_count;
         }
 
-        async function loadHistory() {
-            const { data } = await supabase.from('withdrawals').select('*').eq('user_id', user.id).order('created_at', {ascending:false});
-            const div = document.getElementById('wdHistory');
-            div.innerHTML = data.map(w => `<div class="card" style="padding:10px; font-size:12px;">${w.amount_money} - ${w.status.toUpperCase()}</div>`).join('');
+        // Withdraw Form
+        document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseInt(document.getElementById('withdraw-amount').value);
+            const method = document.getElementById('withdraw-method').value;
+            if (amount > currentUser.balance || amount <= 0) {
+                alert('Invalid amount!');
+                return;
+            }
+            currentUser.balance -= amount;
+            await updateUserData({ balance: currentUser.balance });
+            await addTransaction(-amount, 'withdraw');
+            await saveWithdrawRequest(amount, method);
+            alert('Withdraw request submitted!');
+            showPage('wallet');
+        });
+
+        // Init App
+        async function initApp() {
+            await createUserIfNotExists();
+            currentUser = await getUserData();
+            const today = new Date().toISOString().split('T')[0];
+            if (currentUser.last_login !== today) {
+                await updateUserData({
+                    today_earnings: 0,
+                    last_login: today,
+                    ad_watches_today: 0,
+                    completed_tasks: ''
+                });
+                currentUser.today_earnings = 0;
+                currentUser.ad_watches_today = 0;
+                currentUser.completed_tasks = '';
+            }
+            updateDashboard();
+            updateSpinButtons();
+            // Init Interstitial Ads
+            showInterstitial();
+            document.getElementById('loading').style.display = 'none';
         }
 
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(d => d.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        init();
+        // Start
+        initApp();
     </script>
 </body>
 </html>
