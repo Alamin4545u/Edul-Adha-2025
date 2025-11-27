@@ -1,640 +1,737 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Premium Earning App</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EdChess - The Grandmaster</title>
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Supabase JS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- GIGAPUB SCRIPT PLACEHOLDER -->
+<!-- <script src="https://gigapub.com/sdk.js"></script> -->
+
+<!-- Tailwind Config for Custom Colors -->
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    gold: '#FFD700',
+                    royal: '#C5A059',
+                    glass: 'rgba(255, 255, 255, 0.05)',
+                    darkbg: '#050505',
+                    navbg: 'rgba(10, 10, 10, 0.8)'
+                },
+                fontFamily: {
+                    cinzel: ['Cinzel', 'serif'],
+                    inter: ['Inter', 'sans-serif'],
+                },
+                animation: {
+                    'float': 'float 3s ease-in-out infinite',
+                    'pulse-gold': 'pulseGold 2s infinite',
+                    'spin-slow': 'spin 12s linear infinite',
+                    'slide-up': 'slideUp 0.3s ease-out',
+                },
+                keyframes: {
+                    float: {
+                        '0%, 100%': { transform: 'translateY(0)' },
+                        '50%': { transform: 'translateY(-10px)' },
+                    },
+                    pulseGold: {
+                        '0%, 100%': { boxShadow: '0 0 10px rgba(255, 215, 0, 0.2)' },
+                        '50%': { boxShadow: '0 0 25px rgba(255, 215, 0, 0.5)' },
+                    },
+                    slideUp: {
+                        '0%': { transform: 'translateY(100%)', opacity: '0' },
+                        '100%': { transform: 'translateY(0)', opacity: '1' },
+                    }
+                }
+            }
+        }
+    }
+</script>
+
+<style>
+    body {
+        background-color: #050505;
+        background-image: radial-gradient(circle at 50% 0%, #1a1500 0%, #050505 70%);
+        color: #e5e5e5;
+        -webkit-tap-highlight-color: transparent;
+        overflow: hidden; /* Prevent scrolling on body, handle per page */
+    }
     
-    <!-- Telegram SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Supabase SDK -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 (For nice alerts) -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Monetag Ad SDK -->
-    <script src='//libtl.com/sdk.js' data-zone='10235243' data-sdk='show_10235243'></script>
+    /* Glassmorphism Utilities */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
 
-    <style>
-        :root {
-            --bg-color: #0f0c29;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --primary: #00d2ff;
-            --secondary: #3a7bd5;
-            --text: #ffffff;
-            --text-muted: #a0a0a0;
-            --success: #00b894;
-            --danger: #d63031;
-        }
+    .glass-nav {
+        background: rgba(5, 5, 5, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        body {
-            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            padding-bottom: 80px; /* Space for bottom nav */
-        }
+    .btn-gold {
+        background: linear-gradient(135deg, #C5A059 0%, #FFD700 100%);
+        color: #000;
+        font-weight: 700;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        transition: transform 0.1s, box-shadow 0.2s;
+    }
+    .btn-gold:active {
+        transform: scale(0.96);
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.2);
+    }
 
-        /* --- Animations --- */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* Custom Scrollbar */
+    .scroller {
+        overflow-y: auto;
+        height: 100%;
+        padding-bottom: 100px; /* Space for navbar */
+    }
+    .scroller::-webkit-scrollbar {
+        width: 4px;
+    }
+    .scroller::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
 
-        /* --- Loader --- */
-        #loader {
-            position: fixed; inset: 0; background: var(--bg-color); z-index: 9999;
-            display: flex; justify-content: center; align-items: center; flex-direction: column;
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    /* 3D Chess Button */
+    .chess-btn-container {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 0 auto;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(197, 160, 89, 0.1) 0%, rgba(0,0,0,0) 70%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 215, 0, 0.1);
+    }
 
-        /* --- Layout --- */
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; animation: fadeIn 0.5s ease; }
-        .hidden { display: none !important; }
+    .chess-btn {
+        font-size: 80px;
+        cursor: pointer;
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
+        transition: transform 0.1s;
+        user-select: none;
+    }
+    .chess-btn:active {
+        transform: scale(0.9) rotate(-5deg);
+    }
 
-        /* --- Glass Cards --- */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        }
+    /* Loader */
+    .loader {
+        border: 3px solid rgba(255, 215, 0, 0.1);
+        border-top: 3px solid #FFD700;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
 
-        /* --- Header --- */
-        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; border: 2px solid var(--primary); }
-        .user-info h2 { font-size: 18px; font-weight: 600; }
-        .user-info p { font-size: 12px; color: var(--text-muted); }
-
-        /* --- Dashboard Stats --- */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-box { text-align: center; padding: 15px; border-radius: 15px; background: rgba(0, 210, 255, 0.1); border: 1px solid rgba(0, 210, 255, 0.2); }
-        .stat-val { font-size: 24px; font-weight: 800; color: var(--primary); margin: 5px 0; }
-        .stat-label { font-size: 12px; color: var(--text-muted); }
-
-        /* --- Menu Grid --- */
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .menu-item {
-            background: var(--glass-bg); border: 1px solid var(--glass-border);
-            border-radius: 15px; padding: 20px; text-align: center; cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
-        }
-        .menu-item:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-        .menu-item i { font-size: 28px; margin-bottom: 10px; background: linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .menu-item span { display: block; font-size: 14px; font-weight: 500; }
-
-        /* --- Buttons --- */
-        .btn {
-            width: 100%; padding: 14px; border: none; border-radius: 12px;
-            font-size: 16px; font-weight: 600; cursor: pointer; color: white;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3); transition: 0.3s;
-        }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); }
-        .btn-outline { background: transparent; border: 1px solid var(--glass-border); }
-
-        /* --- Spin Wheel --- */
-        .wheel-container { position: relative; width: 250px; height: 250px; margin: 20px auto; }
-        .wheel {
-            width: 100%; height: 100%; border-radius: 50%;
-            border: 5px solid var(--glass-border);
-            background: conic-gradient(
-                #ff6b6b 0deg 60deg, 
-                #feca57 60deg 120deg, 
-                #48dbfb 120deg 180deg, 
-                #ff9ff3 180deg 240deg, 
-                #54a0ff 240deg 300deg, 
-                #1dd1a1 300deg 360deg
-            );
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        .marker {
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0; border-left: 15px solid transparent;
-            border-right: 15px solid transparent; border-top: 20px solid white; z-index: 2;
-        }
-
-        /* --- Tasks List --- */
-        .task-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px; border-bottom: 1px solid var(--glass-border);
-        }
-        .task-item:last-child { border-bottom: none; }
-        .coin-badge { background: rgba(255, 215, 0, 0.2); color: #ffd700; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-
-        /* --- Forms --- */
-        input, select {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-            color: white; border-radius: 10px; outline: none;
-        }
-        input:focus { border-color: var(--primary); }
-
-        /* --- Bottom Nav --- */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(15, 12, 41, 0.95); backdrop-filter: blur(10px);
-            border-top: 1px solid var(--glass-border);
-            display: flex; justify-content: space-around; padding: 12px 0; z-index: 100;
-        }
-        .nav-item { color: var(--text-muted); font-size: 20px; background: none; border: none; cursor: pointer; position: relative; }
-        .nav-item.active { color: var(--primary); }
-        .nav-item.active::after {
-            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-            width: 5px; height: 5px; background: var(--primary); border-radius: 50%;
-        }
-
-        /* --- Back Button --- */
-        .back-btn { margin-bottom: 15px; background: none; border: none; color: white; font-size: 16px; display: flex; align-items: center; gap: 5px; }
-
-    </style>
+    /* Circular Progress for Cooldown */
+    .circular-chart {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        max-height: 250px;
+    }
+    .circle-bg {
+        fill: none;
+        stroke: rgba(255,255,255,0.05);
+        stroke-width: 2.5;
+    }
+    .circle {
+        fill: none;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke: #FFD700;
+        transition: stroke-dasharray 1s linear;
+    }
+</style>
 </head>
-<body>
+<body class="font-inter">
+<!-- 
+=============================================
+🔥 SUPABASE SQL SETUP (Run in SQL Editor)
+=============================================
 
-    <!-- Loader -->
-    <div id="loader">
-        <div class="spinner"></div>
-        <p style="margin-top: 15px; font-size: 14px; opacity: 0.7;">Loading App...</p>
-    </div>
+-- TABLE users
+create table public.users (
+  id bigint primary key, 
+  username text, 
+  balance numeric default 0, 
+  rank text default 'Pawn', 
+  created_at timestamptz default now()
+);
 
-    <!-- 1. DASHBOARD PAGE -->
-    <div id="page-dashboard" class="container">
-        <!-- Header -->
-        <div class="profile-header">
-            <div class="avatar" id="userAvatar">U</div>
-            <div class="user-info">
-                <h2 id="userName">Loading...</h2>
-                <p>ID: <span id="userId">...</span></p>
+-- TABLE transactions
+create table public.transactions (
+  id uuid primary key default gen_random_uuid(), 
+  user_id bigint references public.users(id), 
+  amount numeric, 
+  type text, 
+  status text default 'pending',
+  created_at timestamptz default now()
+);
+
+-- RPC FUNCTION increment_balance
+create or replace function increment_balance(user_id bigint, amount numeric)
+returns void as $$
+begin
+  update public.users 
+  set balance = balance + amount 
+  where id = user_id;
+end;
+$$ language plpgsql;
+-->
+
+<!-- APP WRAPPER -->
+<div id="app" class="relative h-screen w-full flex flex-col">
+    
+    <!-- HEADER (Shared) -->
+    <header class="flex justify-between items-center p-5 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-royal to-black border border-royal/30 flex items-center justify-center text-gold font-bold text-lg">
+                <span id="rank-icon">♟️</span>
+            </div>
+            <div>
+                <h1 id="username-display" class="font-cinzel font-bold text-white text-lg leading-tight">Player</h1>
+                <p id="rank-display" class="text-xs text-royal uppercase tracking-widest">Pawn</p>
             </div>
         </div>
-
-        <!-- Stats -->
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-label">Balance</div>
-                <div class="stat-val">$<span id="displayBalance">0.00</span></div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Earnings Today</div>
-                <div class="stat-val">$<span id="todayEarnings">0.00</span></div>
-            </div>
+        <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2">
+            <span class="text-gold text-lg">⛃</span>
+            <span id="balance-display" class="font-mono text-white font-bold">0.00</span>
         </div>
+    </header>
 
-        <!-- Menu -->
-        <div class="menu-grid">
-            <div class="menu-item" onclick="navTo('spin')">
-                <i class="fas fa-dharmachakra"></i>
-                <span>Spin & Win</span>
-            </div>
-            <div class="menu-item" onclick="navTo('tasks')">
-                <i class="fas fa-tasks"></i>
-                <span>Daily Tasks</span>
-            </div>
-            <div class="menu-item" onclick="navTo('offerwall')">
-                <i class="fas fa-gift"></i>
-                <span>Offerwall</span>
-            </div>
-            <div class="menu-item" onclick="navTo('wallet')">
-                <i class="fas fa-wallet"></i>
-                <span>Wallet</span>
-            </div>
-        </div>
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 relative overflow-hidden">
         
-        <!-- Native Banner Ad Placement -->
-        <div class="glass-card" style="margin-top: 20px; text-align: center; padding: 10px;">
-            <small style="color:gray">Sponsored</small>
-            <div id="native-ad-container"></div>
-        </div>
-    </div>
-
-    <!-- 2. SPIN PAGE -->
-    <div id="page-spin" class="container hidden">
-        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-        <div class="glass-card" style="text-align: center;">
-            <h2>Lucky Spin</h2>
-            <p style="font-size: 13px; color: #ccc;">Spin to win real cash!</p>
+        <!-- 1. HOME SCREEN -->
+        <section id="home-page" class="page-section absolute inset-0 scroller px-5 pt-4">
             
-            <div class="wheel-container">
-                <div class="marker"></div>
-                <div class="wheel" id="wheelElement"></div>
+            <div class="text-center mb-6 mt-4">
+                <h2 class="font-cinzel text-2xl text-transparent bg-clip-text bg-gradient-to-r from-white via-royal to-white opacity-90">Checkmate Earnings</h2>
+                <p class="text-white/40 text-xs mt-1">Tap the King &bull; Watch Strategy &bull; Earn Gold</p>
             </div>
 
-            <p style="margin-bottom: 10px;">Spins Left: <span id="spinsLeft" style="color: var(--primary); font-weight: bold;">0</span></p>
-            
-            <button class="btn" id="spinBtn" onclick="spinWheel()">SPIN NOW</button>
-            <button class="btn btn-outline" style="margin-top: 10px;" onclick="watchAdForSpin()">
-                <i class="fas fa-video"></i> Watch Ad (+1 Spin)
-            </button>
-        </div>
-    </div>
+            <!-- 3D King Button & Cooldown -->
+            <div class="relative flex flex-col items-center justify-center py-10">
+                <!-- Progress Circle Layer -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-50">
+                    <svg viewBox="0 0 36 36" class="circular-chart w-64 h-64">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="cooldown-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                </div>
 
-    <!-- 3. TASKS PAGE -->
-    <div id="page-tasks" class="container hidden">
-        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-        <h2>Daily Tasks</h2>
-        <div class="glass-card" style="padding: 0;">
-            <div id="taskList">
-                <!-- JS will populate this -->
+                <!-- Button -->
+                <div class="chess-btn-container animate-float">
+                    <div id="king-btn" class="chess-btn" onclick="handleKingTap()">
+                        ♚
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- 4. OFFERWALL PAGE -->
-    <div id="page-offerwall" class="container hidden">
-        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-        <div class="glass-card" style="text-align: center;">
-            <i class="fas fa-gem" style="font-size: 50px; color: var(--secondary); margin-bottom: 15px;"></i>
-            <h3>Premium Offers</h3>
-            <p style="margin-bottom: 20px; color: #ccc;">Complete high paying offers to earn massive rewards.</p>
-            <button class="btn" onclick="openOfferwall()">Open Offerwall</button>
-        </div>
-    </div>
+            <div class="text-center mt-2">
+                <p id="status-text" class="text-royal/80 text-sm font-cinzel">Your Move, Grandmaster.</p>
+            </div>
 
-    <!-- 5. WALLET PAGE -->
-    <div id="page-wallet" class="container hidden">
-        <button class="back-btn" onclick="navTo('dashboard')"><i class="fas fa-arrow-left"></i> Back</button>
-        
-        <div class="glass-card" style="background: linear-gradient(135deg, var(--secondary), var(--primary)); border: none;">
-            <p>Total Balance</p>
-            <h1 style="font-size: 36px;">$<span id="walletBalance">0.00</span></h1>
-        </div>
+            <!-- Recent Activity (Visual Only) -->
+            <div class="mt-12 glass-panel rounded-xl p-4">
+                <h3 class="font-cinzel text-white/70 text-sm mb-3 border-b border-white/5 pb-2">Battle Log</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-white/50">Opening Gambit Reward</span>
+                        <span class="text-gold">+50 ⛃</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-white/50">Daily Login</span>
+                        <span class="text-gold">+10 ⛃</span>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <h3>Withdraw</h3>
-        <div class="glass-card">
-            <select id="wdMethod">
-                <option value="bkash">Bkash</option>
-                <option value="nagad">Nagad</option>
-                <option value="rocket">Rocket</option>
-            </select>
-            <input type="number" id="wdAmount" placeholder="Amount (Min $5)">
-            <input type="number" id="wdNumber" placeholder="Wallet Number">
-            <button class="btn" onclick="submitWithdraw()">Request Withdraw</button>
-        </div>
-
-        <h3>History</h3>
-        <div id="wdHistory">
-            <!-- JS Populated -->
-        </div>
-    </div>
-
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <button class="nav-item active" onclick="navTo('dashboard')"><i class="fas fa-home"></i></button>
-        <button class="nav-item" onclick="navTo('tasks')"><i class="fas fa-list"></i></button>
-        <button class="nav-item" onclick="navTo('wallet')"><i class="fas fa-user"></i></button>
-    </div>
-
-    <script>
-        // ==========================================
-        // 1. CONFIGURATION & INIT
-        // ==========================================
-        const SUPABASE_URL = 'https://nkzdxxuwylkdkncbshjd.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5remR4eHV3eWxrZGtuY2JzaGpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzQwMTIsImV4cCI6MjA3OTY1MDAxMn0.2t-Cn3lL7MbvkNJSrxzx2PheVvuIZNxUIsETFICnvTI';
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        const tg = window.Telegram.WebApp;
-
-        let currentUser = null;
-        let userBalance = 0;
-        let spinsLeft = 0;
-
-        // Initialize App
-        async function initApp() {
-            tg.expand();
+        <!-- 2. TASKS PAGE -->
+        <section id="tasks-page" class="page-section absolute inset-0 scroller px-5 pt-4 hidden">
+            <h2 class="font-cinzel text-2xl text-center mb-6">Strategy Moves</h2>
             
-            // Get Telegram User (or mock for testing)
-            const tgUser = tg.initDataUnsafe.user || { id: 12345678, first_name: "Test User", username: "test_user" };
+            <div class="space-y-4">
+                <!-- Task Item -->
+                <div class="glass-panel p-4 rounded-xl flex items-center gap-4 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-r from-royal/10 to-transparent opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="text-3xl">📢</div>
+                    <div class="flex-1">
+                        <h4 class="text-white font-bold text-sm">Join Announcements</h4>
+                        <p class="text-white/40 text-xs">Subscribe to our channel</p>
+                    </div>
+                    <button class="px-3 py-1.5 rounded-lg border border-royal text-royal text-xs font-bold hover:bg-royal hover:text-black transition" onclick="completeTask(this, 100)">
+                        +100 ⛃
+                    </button>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl flex items-center gap-4">
+                    <div class="text-3xl">🐦</div>
+                    <div class="flex-1">
+                        <h4 class="text-white font-bold text-sm">Follow X (Twitter)</h4>
+                        <p class="text-white/40 text-xs">Like & Retweet Pinned</p>
+                    </div>
+                    <button class="px-3 py-1.5 rounded-lg border border-royal text-royal text-xs font-bold hover:bg-royal hover:text-black transition" onclick="completeTask(this, 150)">
+                        +150 ⛃
+                    </button>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl flex items-center gap-4">
+                    <div class="text-3xl">👥</div>
+                    <div class="flex-1">
+                        <h4 class="text-white font-bold text-sm">Invite a Pawn</h4>
+                        <p class="text-white/40 text-xs">Refer a friend</p>
+                    </div>
+                    <button class="px-3 py-1.5 rounded-lg border border-royal text-royal text-xs font-bold hover:bg-royal hover:text-black transition" onclick="completeTask(this, 500)">
+                        +500 ⛃
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. LEADERBOARD PAGE -->
+        <section id="leaderboard-page" class="page-section absolute inset-0 scroller px-5 pt-4 hidden">
+            <h2 class="font-cinzel text-2xl text-center mb-2">Hall of Masters</h2>
+            <p class="text-center text-white/40 text-xs mb-6">Top 50 Players by Gold</p>
+
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <div class="flex bg-white/5 p-3 text-xs text-white/50 font-bold uppercase tracking-wider">
+                    <div class="w-10 text-center">#</div>
+                    <div class="flex-1 pl-2">Player</div>
+                    <div class="text-right">Balance</div>
+                </div>
+                <div id="leaderboard-list" class="divide-y divide-white/5">
+                    <!-- Populated by JS -->
+                    <div class="p-8 text-center text-white/30 text-xs">Loading rankings...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. WALLET PAGE -->
+        <section id="wallet-page" class="page-section absolute inset-0 scroller px-5 pt-4 hidden">
             
-            if(!tgUser) {
-                alert("Please open in Telegram");
-                return;
-            }
+            <div class="glass-panel rounded-2xl p-6 text-center mb-8 relative overflow-hidden">
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-royal/20 blur-3xl rounded-full"></div>
+                <div class="relative z-10">
+                    <p class="text-white/60 text-sm font-cinzel mb-2">Total Treasury</p>
+                    <h2 id="wallet-balance" class="text-4xl font-bold text-gold font-mono mb-4">0.00</h2>
+                    <div class="flex justify-center gap-2">
+                        <span class="px-2 py-1 bg-white/10 rounded text-[10px] text-white/70">1000 ⛃ = $0.10</span>
+                    </div>
+                </div>
+            </div>
 
-            // Sync with Supabase
-            await loginOrCreateUser(tgUser);
-            
-            // Load UI
-            updateUI();
-            
-            // Setup In-App Interstitial (Provided Code)
-            setupAds();
-
-            // Hide Loader
-            document.getElementById('loader').style.display = 'none';
-        }
-
-        // ==========================================
-        // 2. SUPABASE FUNCTIONS
-        // ==========================================
-        async function loginOrCreateUser(tgUser) {
-            // Check if user exists
-            let { data: user, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', tgUser.id)
-                .single();
-
-            if (!user) {
-                // Create new user
-                const { data: newUser, error: createError } = await supabase
-                    .from('users')
-                    .insert([{
-                        id: tgUser.id,
-                        first_name: tgUser.first_name,
-                        username: tgUser.username,
-                        balance: 0,
-                        spins_left: 1
-                    }])
-                    .select()
-                    .single();
+            <div class="glass-panel rounded-xl p-5">
+                <h3 class="font-cinzel text-white mb-4">Claim Prize</h3>
                 
-                currentUser = newUser;
-            } else {
-                currentUser = user;
-            }
+                <div class="mb-4">
+                    <label class="block text-xs text-white/50 mb-2">Select Method</label>
+                    <div class="flex gap-2">
+                        <button class="flex-1 py-2 rounded border border-white/10 bg-white/5 text-sm hover:border-royal focus:border-royal transition">USDT (TRC20)</button>
+                        <button class="flex-1 py-2 rounded border border-white/10 bg-white/5 text-sm hover:border-royal focus:border-royal transition">TON</button>
+                    </div>
+                </div>
 
-            // Set local vars
-            userBalance = currentUser.balance || 0;
-            spinsLeft = currentUser.spins_left || 0;
+                <div class="mb-6">
+                    <label class="block text-xs text-white/50 mb-2">Wallet Address</label>
+                    <input type="text" id="withdraw-address" placeholder="Enter address..." class="w-full bg-black/50 border border-white/10 rounded p-3 text-white text-sm focus:outline-none focus:border-royal transition">
+                </div>
+
+                <button onclick="submitWithdrawal()" class="w-full btn-gold py-3 rounded-lg text-sm uppercase tracking-wide">
+                    Request Withdrawal
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="glass-nav h-[80px] w-full z-30 flex justify-around items-center px-2 pb-2">
+        
+        <button class="nav-btn active flex flex-col items-center gap-1 p-2 w-16 text-royal transition-all duration-300" onclick="switchPage('home')">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M5,20H19V22H5V20M17,17V19H7V17H17M15,10H19V12H17V16H15V12H13V16H11V12H9V16H7V12H5V10H9V7H7V5H9V3H11V5H13V3H15V5H17V7H15V10M11,7V10H13V7H11Z" /></svg>
+            <span class="text-[10px] font-medium opacity-80">Home</span>
+        </button>
+
+        <button class="nav-btn flex flex-col items-center gap-1 p-2 w-16 text-white/40 hover:text-white transition-all duration-300" onclick="switchPage('tasks')">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M19,20H5V22H19V20M12,2A1,1 0 0,1 13,3V5.18L17.6,18H6.4L11,5.18V3A1,1 0 0,1 12,2M12,18L10.22,13H13.78L12,18M11,7.82L9.22,12H14.78L13,7.82V7H11V7.82Z" /></svg>
+            <span class="text-[10px] font-medium opacity-80">Tasks</span>
+        </button>
+
+        <button class="nav-btn flex flex-col items-center gap-1 p-2 w-16 text-white/40 hover:text-white transition-all duration-300" onclick="switchPage('leaderboard')">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M18,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V4A2,2 0 0,0 18,2M18,20H6V4H18V20M8,12V18H10V12H8M12,8V18H14V8H12M16,14V18H18V14H16Z" /></svg>
+            <span class="text-[10px] font-medium opacity-80">Rank</span>
+        </button>
+
+        <button class="nav-btn flex flex-col items-center gap-1 p-2 w-16 text-white/40 hover:text-white transition-all duration-300" onclick="switchPage('wallet')">
+            <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M5,20H19V22H5V20M12,2C12,2 7,4 7,8V10H5V12H7V15H9V12H11V15H13V12H15V15H17V12H19V10H17V8C17,4 12,2 12,2M12,5C12.83,5 13.5,5.67 13.5,6.5C13.5,7.33 12.83,8 12,8C11.17,8 10.5,7.33 10.5,6.5C10.5,5.67 11.17,5 12,5Z" /></svg>
+            <span class="text-[10px] font-medium opacity-80">Wallet</span>
+        </button>
+
+    </nav>
+
+    <!-- REWARD MODAL -->
+    <div id="reward-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="glass-panel w-[80%] max-w-sm rounded-2xl p-6 text-center transform scale-90 transition-transform duration-300" id="reward-content">
+            <div class="text-6xl mb-4 animate-bounce">🏆</div>
+            <h3 class="text-2xl font-cinzel text-gold mb-2">Victory!</h3>
+            <p class="text-white/70 mb-6">You outsmarted the opponent.</p>
+            <div class="text-4xl font-bold text-white mb-6 flex justify-center items-center gap-2">
+                <span class="text-gold">+</span><span id="reward-amount">100</span> <span class="text-xl">⛃</span>
+            </div>
+            <button onclick="closeRewardModal()" class="w-full btn-gold py-3 rounded-lg font-bold">Collect Loot</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- MAIN JAVASCRIPT -->
+<script>
+    // CONFIGURATION
+    // REPLACE THESE WITH YOUR SUPABASE DETAILS
+    const SUPABASE_URL = 'https://uqyhgzhesvlvclszkkkm.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxeWhnemhlc3ZsdmNsc3pra2ttIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMTIxNzYsImV4cCI6MjA3OTY4ODE3Nn0.X9sZ8V6fOcMbXWnbkMonT-gE1xH-TEDur3Aa7aEGjDc';
+
+    // STATE
+    let user = null;
+    let balance = 0;
+    let isCooldown = false;
+    const adDuration = 3000; // Simulated ad time
+    const cooldownTime = 10000; // 10 seconds between moves
+
+    // INIT CLIENTS
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const tg = window.Telegram.WebApp;
+
+    // ------------------------------------------------------------------
+    // CORE FUNCTIONS
+    // ------------------------------------------------------------------
+
+    async function initApp() {
+        tg.expand();
+        tg.ready();
+
+        // Handle Dark Mode
+        if (tg.colorScheme === 'dark') {
+            document.documentElement.classList.add('dark');
         }
 
-        async function updateBalance(amount) {
-            const newBalance = userBalance + amount;
-            
-            // Optimistic UI update
-            userBalance = newBalance;
-            updateUI();
+        // Mock Telegram Data if testing locally outside Telegram
+        const initData = tg.initDataUnsafe?.user || {
+            id: 123456789,
+            username: "Grandmaster_Test",
+            first_name: "Test"
+        };
 
-            await supabase
+        // Auth / Fetch User
+        await authenticateUser(initData);
+    }
+
+    async function authenticateUser(tgUser) {
+        // Upsert User
+        const { data, error } = await sb
+            .from('users')
+            .select('*')
+            .eq('id', tgUser.id)
+            .single();
+
+        if (!data) {
+            // Create new user
+            const { error: insertError } = await sb
                 .from('users')
-                .update({ balance: newBalance })
-                .eq('id', currentUser.id);
-        }
-
-        async function updateSpins(count) {
-            spinsLeft = count;
-            document.getElementById('spinsLeft').innerText = spinsLeft;
-            
-            await supabase
-                .from('users')
-                .update({ spins_left: count })
-                .eq('id', currentUser.id);
-        }
-
-        async function saveWithdrawRequest(amount, method, number) {
-            const { error } = await supabase
-                .from('withdrawals')
-                .insert([{
-                    user_id: currentUser.id,
-                    amount: amount,
-                    method: method,
-                    wallet_number: number
+                .insert([{ 
+                    id: tgUser.id, 
+                    username: tgUser.username || tgUser.first_name,
+                    balance: 0,
+                    rank: 'Pawn'
                 }]);
             
-            return !error;
-        }
-
-        async function loadWithdrawHistory() {
-            const { data } = await supabase
-                .from('withdrawals')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
-                .limit(5);
-
-            const container = document.getElementById('wdHistory');
-            container.innerHTML = '';
-            
-            if(data) {
-                data.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'task-item';
-                    div.innerHTML = `
-                        <div>
-                            <b>$${item.amount}</b> <small>(${item.method})</small>
-                        </div>
-                        <span class="coin-badge" style="background:${item.status === 'paid' ? 'green':'orange'}; color:white">
-                            ${item.status.toUpperCase()}
-                        </span>
-                    `;
-                    container.appendChild(div);
-                });
+            if (!insertError) {
+                user = { id: tgUser.id, username: tgUser.username, balance: 0, rank: 'Pawn' };
             }
+        } else {
+            user = data;
+            balance = parseFloat(data.balance);
         }
 
-        // ==========================================
-        // 3. MONETAG ADS INTEGRATION
-        // ==========================================
-        function setupAds() {
-            // 1. In-App Interstitial (Provided Settings)
-            if (typeof show_10235243 === 'function') {
-                show_10235243({
-                    type: 'inApp',
-                    inAppSettings: {
-                        frequency: 2,
-                        capping: 0.1,
-                        interval: 30,
-                        timeout: 5,
-                        everyPage: false
-                    }
-                });
-            }
-        }
+        updateUI();
+    }
 
-        // Helper: Watch Interstitial (Standard)
-        function showInterstitial() {
-            // Using rewarded interstitial as fallback for high CPM or direct link if available
-            // For this code, we use the provided Rewarded Interstitial wrapper
-            tg.MainButton.showProgress();
-            
-            if (typeof show_10235243 === 'function') {
-                show_10235243().then(() => {
-                    tg.MainButton.hideProgress();
-                    // Just showing ad, no reward
-                }).catch(e => {
-                    tg.MainButton.hideProgress();
-                    console.error(e);
-                });
-            } else {
-                tg.MainButton.hideProgress();
-                alert("Ad not ready yet. Please check connection.");
-            }
-        }
-
-        // Helper: Watch Rewarded Video (For Tasks/Spin)
-        function watchAdAndReward(rewardAmount, type) {
-            tg.MainButton.showProgress();
-
-            if (typeof show_10235243 === 'function') {
-                // Using the Provided "Rewarded Interstitial" code
-                show_10235243().then(() => {
-                    tg.MainButton.hideProgress();
-                    
-                    // Reward User
-                    if(type === 'coin') {
-                        updateBalance(rewardAmount);
-                        Swal.fire('Success', `You earned $${rewardAmount}!`, 'success');
-                    } else if (type === 'spin') {
-                        updateSpins(spinsLeft + 1);
-                        Swal.fire('Success', 'You got 1 Free Spin!', 'success');
-                    }
-
-                }).catch(e => {
-                    tg.MainButton.hideProgress();
-                    Swal.fire('Opps', 'Ad failed to load or was closed early.', 'error');
-                });
-            } else {
-                tg.MainButton.hideProgress();
-                alert("Ads are loading... please wait 5 seconds.");
-            }
-        }
-
-        // Helper: Offerwall (Popup)
-        function openOfferwall() {
-            if (typeof show_10235243 === 'function') {
-                // Using Provided "Rewarded Popup" code
-                show_10235243('pop').then(() => {
-                    // Reward random amount for testing
-                    let reward = 0.50;
-                    updateBalance(reward);
-                    Swal.fire('Offer Complete', `You earned $${reward}`, 'success');
-                }).catch(e => {
-                    // Error handling
-                });
-            } else {
-                alert("Offerwall loading...");
-            }
-        }
-
-        // ==========================================
-        // 4. FEATURE LOGIC
-        // ==========================================
+    function updateUI() {
+        if (!user) return;
         
-        // --- SPIN ---
-        function spinWheel() {
-            if(spinsLeft <= 0) {
-                Swal.fire({
-                    title: 'No Spins Left!',
-                    text: 'Watch an Ad to get a free spin?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Watch Ad',
-                }).then((result) => {
-                    if (result.isConfirmed) watchAdForSpin();
-                });
-                return;
-            }
+        // Update Text
+        document.getElementById('username-display').innerText = user.username;
+        document.getElementById('balance-display').innerText = balance.toFixed(2);
+        document.getElementById('wallet-balance').innerText = balance.toFixed(2);
+        
+        // Calculate Rank
+        let rank = 'Pawn';
+        let icon = '♟️';
+        if (balance >= 5000) { rank = 'Grandmaster'; icon = '👑'; }
+        else if (balance >= 1000) { rank = 'Knight'; icon = '♞'; }
 
-            const wheel = document.getElementById('wheelElement');
-            const btn = document.getElementById('spinBtn');
-            btn.disabled = true;
+        document.getElementById('rank-display').innerText = rank;
+        document.getElementById('rank-icon').innerText = icon;
+        
+        // Sync with DB if rank changed (optimistic)
+        if (rank !== user.rank) {
+            user.rank = rank;
+            sb.from('users').update({ rank: rank }).eq('id', user.id).then();
+        }
+    }
 
-            // Update DB count
-            updateSpins(spinsLeft - 1);
+    // ------------------------------------------------------------------
+    // GAMEPLAY & ADS
+    // ------------------------------------------------------------------
 
-            // Random degree (min 3 rotations)
-            const deg = Math.floor(5000 + Math.random() * 5000); 
-            wheel.style.transform = `rotate(${deg}deg)`;
+    function handleKingTap() {
+        if (isCooldown) return;
+        
+        // Simulate Ad Trigger
+        showAd().then(() => {
+            // Ad Closed, Reward User
+            const reward = Math.floor(Math.random() * 50) + 10;
+            claimReward(reward);
+        }).catch(e => console.error(e));
+    }
 
-            // Calculate Reward (Mock logic)
+    function showAd() {
+        return new Promise((resolve) => {
+            // Show loading/ad text
+            const status = document.getElementById('status-text');
+            const btn = document.getElementById('king-btn');
+            
+            status.innerText = "Analyzing Opponent Strategy... (Ad)";
+            btn.style.transform = "scale(0.8)";
+            btn.innerText = "⏳";
+            
+            // Simulate Ad Duration
             setTimeout(() => {
-                const reward = (Math.random() * 0.5).toFixed(2); // Random 0.00 to 0.50
-                updateBalance(parseFloat(reward));
-                Swal.fire('Winner!', `You won $${reward}`, 'success');
-                btn.disabled = false;
-                wheel.style.transform = `rotate(0deg)`; // Reset
-            }, 4500);
+                btn.style.transform = "scale(1)";
+                btn.innerText = "♚";
+                status.innerText = "Strategy Found!";
+                resolve(true);
+            }, adDuration);
+        });
+    }
+
+    async function claimReward(amount) {
+        // Show Popup
+        const modal = document.getElementById('reward-modal');
+        const content = document.getElementById('reward-content');
+        document.getElementById('reward-amount').innerText = amount;
+        
+        modal.classList.remove('hidden');
+        // Small delay for CSS transition
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-90');
+            content.classList.add('scale-100');
+        }, 50);
+
+        // DB Update
+        const { error } = await sb.rpc('increment_balance', { 
+            user_id: user.id, 
+            amount: amount 
+        });
+
+        if (!error) {
+            balance += amount;
+            updateUI();
         }
 
-        function watchAdForSpin() {
-            watchAdAndReward(0, 'spin');
-        }
+        startCooldown();
+    }
 
-        // --- TASKS ---
-        function renderTasks() {
-            const list = document.getElementById('taskList');
-            const tasks = [
-                { id: 1, title: 'Watch Video Ad', reward: 0.10 },
-                { id: 2, title: 'Visit Sponsor', reward: 0.05 },
-                { id: 3, title: 'Daily Check-in', reward: 0.02 },
-                { id: 4, title: 'Premium Ad', reward: 0.20 },
-            ];
+    function closeRewardModal() {
+        const modal = document.getElementById('reward-modal');
+        const content = document.getElementById('reward-content');
+        
+        modal.classList.add('opacity-0');
+        content.classList.remove('scale-100');
+        content.classList.add('scale-90');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
 
-            list.innerHTML = tasks.map(t => `
-                <div class="task-item" onclick="watchAdAndReward(${t.reward}, 'coin')">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <i class="fas fa-play-circle" style="color:var(--primary)"></i>
-                        <span>${t.title}</span>
-                    </div>
-                    <span class="coin-badge">+$${t.reward}</span>
-                </div>
-            `).join('');
-        }
+    function startCooldown() {
+        isCooldown = true;
+        const circle = document.getElementById('cooldown-circle');
+        const status = document.getElementById('status-text');
+        const btn = document.getElementById('king-btn');
 
-        // --- WITHDRAW ---
-        async function submitWithdraw() {
-            const amount = parseFloat(document.getElementById('wdAmount').value);
-            const method = document.getElementById('wdMethod').value;
-            const number = document.getElementById('wdNumber').value;
+        status.innerText = "Resting pieces...";
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
 
-            if(amount < 5) return Swal.fire('Error', 'Minimum withdraw is $5', 'error');
-            if(amount > userBalance) return Swal.fire('Error', 'Insufficient Balance', 'error');
-            if(!number) return Swal.fire('Error', 'Enter wallet number', 'error');
+        // Animate Circle (Stroke Dashoffset)
+        // Circumference ~ 100
+        circle.style.strokeDasharray = "100, 100";
+        circle.style.transition = `stroke-dasharray ${cooldownTime}ms linear`;
+        
+        // Trigger reflow
+        void circle.offsetWidth;
+        
+        circle.style.strokeDasharray = "0, 100";
 
-            const success = await saveWithdrawRequest(amount, method, number);
-            
-            if(success) {
-                updateBalance(-amount); // Deduct balance
-                Swal.fire('Success', 'Withdrawal request submitted!', 'success');
-                loadWithdrawHistory();
-            } else {
-                Swal.fire('Error', 'Server error. Try again.', 'error');
+        setTimeout(() => {
+            isCooldown = false;
+            circle.style.transition = 'none';
+            circle.style.strokeDasharray = "0, 100"; // Reset
+            status.innerText = "Your Move, Grandmaster.";
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }, cooldownTime);
+    }
+
+    // ------------------------------------------------------------------
+    // TASKS
+    // ------------------------------------------------------------------
+    
+    function completeTask(btn, amount) {
+        if (btn.innerText === "Claimed") return;
+
+        btn.innerHTML = `<div class="loader w-4 h-4 border-2"></div>`;
+        
+        // Simulate API call check
+        setTimeout(async () => {
+            const { error } = await sb.rpc('increment_balance', { 
+                user_id: user.id, 
+                amount: amount 
+            });
+
+            if(!error) {
+                balance += amount;
+                updateUI();
+                btn.innerText = "Claimed";
+                btn.classList.remove('border-royal', 'text-royal', 'hover:bg-royal');
+                btn.classList.add('bg-green-500/20', 'text-green-400', 'border-transparent', 'cursor-default');
+                btn.onclick = null;
             }
+        }, 1500);
+    }
+
+    // ------------------------------------------------------------------
+    // LEADERBOARD
+    // ------------------------------------------------------------------
+
+    async function fetchLeaderboard() {
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = `<div class="p-8 text-center text-white/30 text-xs"><div class="loader mx-auto mb-2"></div>Fetching data...</div>`;
+
+        const { data, error } = await sb
+            .from('users')
+            .select('username, balance')
+            .order('balance', { ascending: false })
+            .limit(50);
+
+        if (data) {
+            let html = '';
+            data.forEach((u, index) => {
+                const isMe = u.username === user.username ? 'bg-royal/20' : '';
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+                
+                html += `
+                    <div class="flex items-center p-3 text-sm ${isMe}">
+                        <div class="w-10 text-center font-bold text-gold">${medal}</div>
+                        <div class="flex-1 pl-2 text-white font-medium truncate">${u.username}</div>
+                        <div class="text-right text-gold font-mono">${parseFloat(u.balance).toFixed(0)}</div>
+                    </div>
+                `;
+            });
+            list.innerHTML = html;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // WALLET
+    // ------------------------------------------------------------------
+
+    async function submitWithdrawal() {
+        const addr = document.getElementById('withdraw-address').value;
+        if (addr.length < 5) {
+            alert("Please enter a valid address.");
+            return;
+        }
+        
+        if (balance < 1000) {
+            alert("Minimum withdrawal is 1000 Coins.");
+            return;
         }
 
-        // ==========================================
-        // 5. UI & ROUTING
-        // ==========================================
-        function updateUI() {
-            document.getElementById('userName').innerText = currentUser.first_name;
-            document.getElementById('userId').innerText = currentUser.id;
-            document.getElementById('userAvatar').innerText = currentUser.first_name.charAt(0);
-            
-            document.getElementById('displayBalance').innerText = userBalance.toFixed(2);
-            document.getElementById('walletBalance').innerText = userBalance.toFixed(2);
-            document.getElementById('todayEarnings').innerText = (userBalance * 0.1).toFixed(2); // Mock logic for today
-            document.getElementById('spinsLeft').innerText = spinsLeft;
+        const { error } = await sb.from('transactions').insert([{
+            user_id: user.id,
+            amount: balance,
+            type: 'withdrawal',
+            status: 'pending'
+        }]);
+
+        if (!error) {
+            alert("Withdrawal request sent!");
+            // Optionally deduct balance immediately or wait for approval
+            // For this demo, we keep balance but log transaction
+            document.getElementById('withdraw-address').value = '';
+        } else {
+            alert("Error processing request.");
         }
+    }
 
-        function navTo(pageId) {
-            // Hide all pages
-            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
-            
-            // Show target
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+    // ------------------------------------------------------------------
+    // NAVIGATION
+    // ------------------------------------------------------------------
 
-            // Logic triggers
-            if(pageId === 'tasks') renderTasks();
-            if(pageId === 'wallet') loadWithdrawHistory();
+    function switchPage(pageId) {
+        // Update Active Icon
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('text-royal', 'active');
+            btn.classList.add('text-white/40');
+        });
+        event.currentTarget.classList.remove('text-white/40');
+        event.currentTarget.classList.add('text-royal', 'active');
 
-            // Bottom Nav Active State
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // Simple logic to highlight nav (mapping pageId to index)
-            if(pageId === 'dashboard') document.querySelectorAll('.nav-item')[0].classList.add('active');
-            if(pageId === 'tasks') document.querySelectorAll('.nav-item')[1].classList.add('active');
-            if(pageId === 'wallet') document.querySelectorAll('.nav-item')[2].classList.add('active');
-        }
+        // Hide all pages
+        document.querySelectorAll('.page-section').forEach(sec => {
+            sec.classList.add('hidden');
+            sec.classList.remove('animate-slide-up');
+        });
 
-        // Start
-        window.onload = initApp;
+        // Show target page
+        const target = document.getElementById(`${pageId}-page`);
+        target.classList.remove('hidden');
+        target.classList.add('animate-slide-up');
 
-    </script>
+        // Load data if needed
+        if (pageId === 'leaderboard') fetchLeaderboard();
+    }
+
+    // START
+    window.onload = initApp;
+
+</script>
 </body>
 </html>
